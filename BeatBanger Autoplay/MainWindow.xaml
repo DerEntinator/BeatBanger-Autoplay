@@ -1,0 +1,73 @@
+﻿<Window x:Class="BeatBanger_Autoplay.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BeatBanger_Autoplay"
+        mc:Ignorable="d"
+        Title="BeatBanger Autoplayer" Height="450" Width="850" MinHeight="200" MinWidth="720">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" MinWidth="50"/>
+            <ColumnDefinition Width="1*" MinWidth="50"/>
+            <ColumnDefinition Width="1*" MinWidth="50"/>
+            <ColumnDefinition Width="1*" MinWidth="50"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*" MinHeight="30"/>
+            <RowDefinition Height="1*" MinHeight="40"/>
+            <RowDefinition Height="10*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Margin="10,0,0,0">
+            <Label Content="Source" FontSize="20" />
+            <RadioButton x:Name="Story_Radio" GroupName="Source_Radio" Tag="data" Content="Story" Checked="Source_Changer" />
+            <RadioButton x:Name="Mods_Radio" GroupName="Source_Radio" Tag="mods" Content="Mods" Checked="Source_Changer"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.Column="0" VerticalAlignment="Stretch" Height="Auto">
+            <Label Content="LevelPack"/>
+            <ListView x:Name="Levelpack_List" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="Auto" Margin="5" ItemsSource="{Binding levelpack_Collection}"  SelectionChanged="Levelpack_Changer"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.Column="1" VerticalAlignment="Stretch">
+            <Label Content="Level"/>
+            <ListView x:Name="Level_List" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" ItemsSource="{Binding level_Collection}" SelectionChanged="Levels_Changer"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.Column="2" VerticalAlignment="Stretch">
+            <Label Content="Difficulty"/>
+            <ListView x:Name="Difficulty_List" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" ItemsSource="{Binding difficulty_Collection}" SelectionChanged="Difficulty_Changer"/>
+        </StackPanel>
+        <TextBox Grid.Row="0" Grid.Column="1" x:Name="GameFolder_TextBox" HorizontalAlignment="Stretch" Margin="10,0,10,0" TextWrapping="Wrap" Text="GameFolder" VerticalAlignment="Center" MouseDoubleClick="FolderSelect_Click" />
+        <Button Grid.Row="1" Grid.Column="1" Content="Reload" Margin="5" HorizontalAlignment="Left" VerticalAlignment="Stretch" Click="Reload_Click" Width="85"/>
+        <Button Grid.Row="1" Grid.Column="2" Content="Start (F10)" Margin="5" HorizontalAlignment="Left" VerticalAlignment="Stretch" Click="Start_Click" Width="85"/>
+        <Button Grid.Row="1" Grid.Column="2" Content="Stop (F11)" Margin="5" HorizontalAlignment="Right" VerticalAlignment="Stretch" Click="Stop_Click" Width="85"/>
+        <TextBox Grid.Row="1" Grid.RowSpan="2" Grid.Column="3" x:Name="Notes_Textblock" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" HorizontalAlignment="Stretch" TextWrapping="Wrap" Text="Timesheet" VerticalAlignment="Stretch" MinHeight="160" Margin="5"/>
+
+        <Grid Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,5,0" Content="Keys"/>
+            <TextBox x:Name="Key1" Text="Z" Grid.Column="1" Margin="5" TextChanged="Key_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+            <TextBox x:Name="Key2" Text="X" Grid.Column="2" Margin="5" TextChanged="Key_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+            <TextBox x:Name="Key3" Text="C" Grid.Column="3" Margin="5" TextChanged="Key_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+            <TextBox x:Name="Key4" Text="V" Grid.Column="4" Margin="5" TextChanged="Key_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        </Grid>
+
+        <Grid Grid.Row="0" Grid.Column="3" Grid.ColumnSpan="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,5,0" Content="Polling Delay"/>
+            <TextBox x:Name="PollingRate" Text="10" Grid.Column="1" Margin="5" TextChanged="Key_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        </Grid>
+    </Grid>
+</Window>
