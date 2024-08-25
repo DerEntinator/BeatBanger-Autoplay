@@ -1,6 +1,6 @@
 # BeatBanger Autoplay
 
-Simple BeatBanger auto-player with a WPF GUI for Windows 7+.
+Simple BeatBanger auto-player with a WPF GUI for Windows 7+. <br>
 (In principle just emulating keyboard presses timed to the underlying notes.cfg)
 
 After launching, pick the game folder and everything else should be self-explanatory.
