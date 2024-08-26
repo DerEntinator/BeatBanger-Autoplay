@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,8 +16,6 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using WindowsInput;
 using WindowsInput.Native;
-using System.Reflection;
-using System.Windows.Forms;
 
 namespace BeatBanger_Autoplay
 {
