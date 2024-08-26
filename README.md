@@ -4,7 +4,7 @@ Simple BeatBanger auto-player with a WPF GUI for Windows 7+. <br>
 (In principle just emulating keyboard presses timed to the underlying notes.cfg)
 
 To run the standard version of the software you might need to install a specific .net runtime. If you don't have it already you'll get a prompt to download it from Microsoft when you launch the software. <br>
-If you don't want to deal with the runtime directly there is also a self-contained release you can choose.
+If you don't want to deal with the runtime directly there is also the self-contained (_SC) release you can choose.
 
 After launching, pick the game folder and everything else should be self-explanatory.
 
