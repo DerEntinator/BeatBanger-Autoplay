@@ -6,16 +6,14 @@ Simple BeatBanger auto-player with a WPF GUI for Windows 7+. <br>
 To run the standard version of the software you might need to install a specific .net runtime. If you don't have it already you'll get a prompt to download it from Microsoft when you launch the software. <br>
 If you don't want to deal with the runtime directly there is also the self-contained (_SC) release you can choose.
 
-After launching, pick the game folder and everything else should be self-explanatory.
+With V2.0 everything is prettier and better and ✨Just Works✨,... i hope...
 
-The Start and Stop buttons are not really needed as you need to use the hotkeys to time the start of the game anyway. <br>
-When starting a level hit the F10-Key (Play hotkey) when the timing would be perfect for the first note of the level. <br>
-To stop the inputs hit the F11-Key (Stop hotkey). Stopping resets the inputs so you can't pause and resume a level right now.
+If the exe is in the game folder when started it'll figure everything out on its own, if it's not you'll get a folder select where you have to select the game folder manually.
 
-The Reload button reloads all the sources if you add new mods at some point.
+The Reload button: hooks into the game, gets the memory addresses, loads all available levels and reloads the in-game hotkeys(if you changed them)
 
-Pick either story levels or mods and click through the lists till you pick a difficulty. The timing sheet on the right is just for debugging and can be ignored.
-Keys are defaulted for a standard qwerty layout on zxcv but can be customized. <br>
-As for the polling delay: smaller values use more CPU but might help with hitting more perfects, although 10 worked perfectly for me.
+If everything is hooked and loaded you can just start any level in the game and watch it play itself it.
 
-![image](https://github.com/user-attachments/assets/6773d644-2e68-499c-b890-4e93d48467f5)
+Have fun :D!
+
+![image](https://github.com/user-attachments/assets/420dfd8b-7a84-474b-844b-8ffa4d91167e)
