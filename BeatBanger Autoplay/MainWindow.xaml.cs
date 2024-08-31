@@ -8,15 +8,14 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Input;
-using WindowsInput;
-using WindowsInput.Native;
 
 namespace BeatBanger_Autoplay
 {
     public class Keyvent
     {
-        public VirtualKeyCode key;
+        public Keys key;
         public double timestamp;
         public bool down;
     }
@@ -65,8 +64,6 @@ namespace BeatBanger_Autoplay
 
     public partial class MainWindow : Window
     {
-        InputSimulator InputSimulator = new InputSimulator();
-
         List<ConfigFile> fileList = new List<ConfigFile>();
         string currentLevel = "";
         double levelDelay = 0.0;
@@ -76,12 +73,14 @@ namespace BeatBanger_Autoplay
 
         string gameFolder = "";
         string keybindingsPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Godot\\app_userdata\\Beat Banger\\binds.sav";
-        VirtualKeyCode key1 = VirtualKeyCode.VK_Z;
-        VirtualKeyCode key2 = VirtualKeyCode.VK_X;
-        VirtualKeyCode key3 = VirtualKeyCode.VK_C;
-        VirtualKeyCode key4 = VirtualKeyCode.VK_V;
-        VirtualKeyCode key5 = VirtualKeyCode.VK_Q;
-        VirtualKeyCode key6 = VirtualKeyCode.VK_E;
+        Keys key1 = Keys.Z;
+        Keys key2 = Keys.X;
+        Keys key3 = Keys.C;
+        Keys key4 = Keys.V;
+        Keys key5 = Keys.Q;
+        Keys key6 = Keys.E;
+        const uint WM_KEYDOWN = 0x100;
+        const uint WM_KEYUP = 0x0101;
 
         int pollingDelay = 1;
 
@@ -91,14 +90,17 @@ namespace BeatBanger_Autoplay
         private static readonly string[] ProcessNames = { "beatbanger" };
         int oldPID = 0;
         private static IntPtr _processHandle;
+        private static IntPtr _windowHandle;
         List<memSpace> memAddresses = new List<memSpace>();
         private static IntPtr _timeAddress;
         private static IntPtr _dataAddress;
 
+        bool paused = false;
+
         public MainWindow()
         {
             InitializeComponent();
-
+            
             ReloadKeys();
             try
             {
@@ -124,6 +126,11 @@ namespace BeatBanger_Autoplay
 
         private void Reload_Click(object sender, RoutedEventArgs e)
         { try { Reload().Wait(); } catch { } }
+
+        private void Pause_Click(object sender, RoutedEventArgs e)
+        { try { paused = true; State_Display.Background = System.Windows.Media.Brushes.IndianRed; } catch { } }
+        private void Pause_UnClick(object sender, RoutedEventArgs e)
+        { try { paused = false; State_Display.Background = System.Windows.Media.Brushes.DarkSeaGreen; } catch { } }
         #endregion
 
         #region General-Functions
@@ -178,15 +185,16 @@ namespace BeatBanger_Autoplay
             {
                 if (Process.GetProcessesByName(processName).Length == 0) { Notes_Textblock.Text = "Game is not launched!"; return; }
 
-                if (oldPID == 0 || oldPID != Process.GetProcessesByName(processName)[0].Id || _processHandle == IntPtr.Zero || _timeAddress == IntPtr.Zero || _dataAddress == IntPtr.Zero)
+                if (oldPID == 0 || oldPID != Process.GetProcessesByName(processName)[0].Id || _processHandle == IntPtr.Zero || _windowHandle == IntPtr.Zero || _timeAddress == IntPtr.Zero || _dataAddress == IntPtr.Zero)
                 {
                     oldPID = Process.GetProcessesByName(processName)[0].Id;
                     // try to get process handle
-                    if (!Connect()) { Notes_Textblock.Text += "Failed to get Handle!\n"; }
+                    if (!Connect()) { Notes_Textblock.Text += "Failed to get Handle for Process or Window!\n"; }
                     else LoadAddresses();
                 }
                 else Notes_Textblock.Text += "Everything is connected and hooked :)\n";
             }
+            clearMemory();
         }
 
         private void ReloadKeys()
@@ -201,12 +209,12 @@ namespace BeatBanger_Autoplay
                 JObject bindingsObj = JObject.Parse(bindings);
                 var binds = bindingsObj["registered_keys"].Children().ToList();
 
-                key1 = (VirtualKeyCode)binds[0]["keycode"].Value<int>();
-                key2 = (VirtualKeyCode)binds[1]["keycode"].Value<int>();
-                key3 = (VirtualKeyCode)binds[2]["keycode"].Value<int>();
-                key4 = (VirtualKeyCode)binds[3]["keycode"].Value<int>();
-                key5 = (VirtualKeyCode)binds[4]["keycode"].Value<int>();
-                key6 = (VirtualKeyCode)binds[5]["keycode"].Value<int>();
+                key1 = (Keys)binds[0]["keycode"].Value<int>();
+                key2 = (Keys)binds[1]["keycode"].Value<int>();
+                key3 = (Keys)binds[2]["keycode"].Value<int>();
+                key4 = (Keys)binds[3]["keycode"].Value<int>();
+                key5 = (Keys)binds[4]["keycode"].Value<int>();
+                key6 = (Keys)binds[5]["keycode"].Value<int>();
 
                 LoadNotes();
             }
@@ -264,7 +272,6 @@ namespace BeatBanger_Autoplay
         private async Task LoadNotes()
         {
             timesheet.Clear();
-            //Dispatcher.Invoke(() => { Notes_Textblock.Text = ""; });
             if (notesJSON != null)
             {
                 for (int i = 0; i < difficulties.Count; i++)
@@ -273,50 +280,47 @@ namespace BeatBanger_Autoplay
                     List<Keyvent> keys = new List<Keyvent>();
                     foreach (JToken note in rawNotes)
                     {
-                        Keyvent pressKey = new Keyvent() { down = true };
-                        Keyvent holdRelease = new Keyvent() { down = false };
-
-                        switch (note.Value<int>("input_type"))
+                        if (note.Value<int>("note_modifier") != 1)                                   //handle Autoplay notes
                         {
-                            case 0:
-                                Dispatcher.Invoke(() => { pressKey.key = key1; });
-                                Dispatcher.Invoke(() => { holdRelease.key = key1; });
-                                break;
-                            case 1:
-                                Dispatcher.Invoke(() => { pressKey.key = key2; });
-                                Dispatcher.Invoke(() => { holdRelease.key = key2; });
-                                break;
-                            case 2:
-                                Dispatcher.Invoke(() => { pressKey.key = key3; });
-                                Dispatcher.Invoke(() => { holdRelease.key = key3; });
-                                break;
-                            case 3:
-                                Dispatcher.Invoke(() => { pressKey.key = key4; });
-                                Dispatcher.Invoke(() => { holdRelease.key = key4; });
-                                break;
+                            Keyvent pressKey = new Keyvent() { down = true };
+                            Keyvent holdRelease = new Keyvent() { down = false };
+
+                            switch (note.Value<int>("input_type"))
+                            {
+                                case 0:
+                                    Dispatcher.Invoke(() => { pressKey.key = key1; });
+                                    Dispatcher.Invoke(() => { holdRelease.key = key1; });
+                                    break;
+                                case 1:
+                                    Dispatcher.Invoke(() => { pressKey.key = key2; });
+                                    Dispatcher.Invoke(() => { holdRelease.key = key2; });
+                                    break;
+                                case 2:
+                                    Dispatcher.Invoke(() => { pressKey.key = key3; });
+                                    Dispatcher.Invoke(() => { holdRelease.key = key3; });
+                                    break;
+                                case 3:
+                                    Dispatcher.Invoke(() => { pressKey.key = key4; });
+                                    Dispatcher.Invoke(() => { holdRelease.key = key4; });
+                                    break;
+                            }
+
+                            pressKey.timestamp = ((note.Value<double>("timestamp") + levelDelay) * 1000.0);
+                            if (note.Value<double>("hold_end_timestamp") != 0.0)
+                                holdRelease.timestamp = ((note.Value<double>("hold_end_timestamp") + levelDelay) * 1000.0);
+                            else
+                                holdRelease.timestamp = ((note.Value<double>("timestamp") + levelDelay) * 1000.0 + 30.0);
+
+                            keys.Add(pressKey);
+                            keys.Add(holdRelease);
                         }
-
-                        pressKey.timestamp = ((note.Value<double>("timestamp") + levelDelay) * 1000.0);
-                        if (note.Value<double>("hold_end_timestamp") != 0.0)
-                            holdRelease.timestamp = ((note.Value<double>("hold_end_timestamp") + levelDelay) * 1000.0);
-                        else
-                            holdRelease.timestamp = ((note.Value<double>("timestamp") + levelDelay) * 1000.0 + 30.0);
-
-                        keys.Add(pressKey);
-                        keys.Add(holdRelease);
                     }
 
                     keys.Sort((s1, s2) => s1.timestamp.CompareTo(s2.timestamp));
-                    string outputText = "Difficulty: " + difficulties[i] + "\n";
-                    for (int n = 0; n < 10; n++)
-                    {
-                        Keyvent kvent = keys[n];
-                        outputText += "Key:" + kvent.key + " Down:" + kvent.down + " Ts:" + Math.Round(kvent.timestamp, 0) + "\n";
-                    }
-                    //Dispatcher.Invoke(() => { Notes_Textblock.Text += outputText; });
                     timesheet.Add(keys);
                 }
             }
+            clearMemory();
         }
 
         private async Task run()
@@ -341,7 +345,7 @@ namespace BeatBanger_Autoplay
                             currentDifficulty = dataBuffer[9 * 8];
                         else currentDifficulty = dataBuffer[21 * 8];
 
-                        VirtualKeyCode buffer = VirtualKeyCode.CANCEL;
+                        Keys buffer;
                         for (int n = 0; n < timesheet[currentDifficulty].Count; n++)
                         {
                             buffer = timesheet[currentDifficulty][n].key;
@@ -353,23 +357,32 @@ namespace BeatBanger_Autoplay
                                 ReadProcessMemory(_processHandle, _timeAddress, timeBuffer, sizeof(double), out _);
                                 timeRead = BitConverter.ToDouble(timeBuffer) * 1000.0;
                             } while (timeRead + (pollingDelay / 2.0) < timesheet[currentDifficulty][n].timestamp);
-
-                            if (timesheet[currentDifficulty][n].down)
-                                InputSimulator.Keyboard.KeyDown(buffer);
-                            else
-                                InputSimulator.Keyboard.KeyUp(buffer);
+                           
+                            if (!paused)
+                            {
+                                if (timesheet[currentDifficulty][n].down)
+                                    PostMessage(_windowHandle, WM_KEYDOWN, (IntPtr)(buffer), IntPtr.Zero);
+                                else
+                                    PostMessage(_windowHandle, WM_KEYUP, (IntPtr)(buffer), IntPtr.Zero);
+                            }
                         }
                     restartLevel:
-                        InputSimulator.Keyboard.KeyUp(VirtualKeyCode.VK_Y);
-                        InputSimulator.Keyboard.KeyUp(VirtualKeyCode.VK_X);
-                        InputSimulator.Keyboard.KeyUp(VirtualKeyCode.VK_C);
-                        InputSimulator.Keyboard.KeyUp(VirtualKeyCode.VK_V);
+                        PostMessage(_windowHandle, WM_KEYUP, (IntPtr)(key1), IntPtr.Zero);
+                        PostMessage(_windowHandle, WM_KEYUP, (IntPtr)(key2), IntPtr.Zero);
+                        PostMessage(_windowHandle, WM_KEYUP, (IntPtr)(key3), IntPtr.Zero);
+                        PostMessage(_windowHandle, WM_KEYUP, (IntPtr)(key4), IntPtr.Zero);
                     }
-
                     await Task.Delay(pollingDelay);
                 }
                 catch { }
             }
+        }
+
+        private void clearMemory()
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
         }
         #endregion
 
@@ -379,9 +392,10 @@ namespace BeatBanger_Autoplay
             foreach (string processName in ProcessNames)
             {
                 _processHandle = OpenProcess(_PROCESS_ALL_ACCESS, false, Process.GetProcessesByName(processName)[0].Id);
-                if (_processHandle != IntPtr.Zero)
+                _windowHandle = Process.GetProcessesByName(processName)[0].MainWindowHandle;
+                if (_processHandle != IntPtr.Zero && _windowHandle != IntPtr.Zero)
                 {
-                    Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Game connected! \nHandle: " + _processHandle.ToString("X8") + "\n");
+                    Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Game connected! \nHandles: P:" + _processHandle.ToString("X8") + " W:" + _windowHandle.ToString("X8") + "\n");
                     memAddresses.Clear();
 
                     SYSTEM_INFO SI;
@@ -437,7 +451,7 @@ namespace BeatBanger_Autoplay
                 "01 00 00 00 ?? 00 00 ?? " +
                 "00 00 00 00 00 00 00 00 " +
                 "00 00 00 00 00 00 00 00 " +
-                "02 00 00 00 ?? 00 00 ?? " +
+                "02 00 00 00 ?? ?? ?? ?? " +
                 "?? 00 00 00 00 00 00 00 " +        //Selector ModLevelPack
                 "00 00 00 00 00 00 00 00 " +
                 "02 00 00 00 ?? ?? 00 00 " +
@@ -497,8 +511,10 @@ namespace BeatBanger_Autoplay
 
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern void GetSystemInfo(out SYSTEM_INFO Info);
-        #endregion
 
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+        #endregion
     }
 }
 

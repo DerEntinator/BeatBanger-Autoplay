@@ -20,7 +20,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="InputSimulator" Version="1.0.4" />
 		<PackageReference Include="Microsoft-WindowsAPICodePack-Core" Version="1.1.5" />
 		<PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
 		<PackageReference Include="ModernWpfUI" Version="0.9.6" />
