@@ -10,7 +10,7 @@ With V2.0 everything is prettier and better and ✨Just Works✨,... i hope...
 
 If the exe is in the game folder when started it'll figure everything out on its own, if it's not you'll get a folder select where you have to select the game folder manually.
 
-The Reload button: hooks into the game, gets the memory addresses, loads all available levels and reloads the in-game hotkeys(if you changed them)
+The Reload button: hooks into the game, gets the memory addresses, loads all available levels and reloads the in-game hotkeys(if you changed them)<br>
 The Pause button stops the keyboard input. Useful if you want to play yourself for a bit or train a specific part of a level.
 
 If everything is hooked and loaded you can just start any level in the game and watch it play itself.
