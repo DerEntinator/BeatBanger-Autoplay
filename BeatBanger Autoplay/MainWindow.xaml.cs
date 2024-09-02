@@ -239,8 +239,6 @@ namespace BeatBanger_Autoplay
 
         private async Task getLevel()
         {
-
-
             byte[] dataBuffer = new byte[22 * 8];
             int oldType = -1;
             int oldPack = -1;
@@ -253,7 +251,7 @@ namespace BeatBanger_Autoplay
             {
                 try
                 {
-                    if (gameFolder != "ERROR")
+                    if (gameFolder != "ERROR" && _processHandle != IntPtr.Zero && _windowHandle != IntPtr.Zero && _timeAddress != IntPtr.Zero && _dataAddress != IntPtr.Zero)
                     {
                         List<string> tempList = Directory.GetFiles(gameFolder, "notes.cfg", SearchOption.AllDirectories).ToList();
 
@@ -342,7 +340,6 @@ namespace BeatBanger_Autoplay
 
                         if (fileList.Length > typeRead && fileList[typeRead].Count > levelPackRead && fileList[typeRead][levelPackRead].level.Count > levelRead)
                         {
-
                             Dispatcher.BeginInvoke(() => Level_Textblock.Text = "Level: " + fileList[typeRead][levelPackRead].level[levelRead].levelName);
 
                             if (oldLevel != levelRead || oldPack != levelPackRead || oldType != typeRead)
@@ -667,10 +664,10 @@ namespace BeatBanger_Autoplay
                                  MessageBoxButton.OK,
                                  MessageBoxImage.Error);
         }
-        private void Message(string message)
-        {
-            MessageBoxResult result = System.Windows.MessageBox.Show(message, "Info!", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+        //private void Message(string message)
+        //{
+        //    MessageBoxResult result = System.Windows.MessageBox.Show(message, "Info!", MessageBoxButton.OK, MessageBoxImage.Information);
+        //}
     }
 }
 
