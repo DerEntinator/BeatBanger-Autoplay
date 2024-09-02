@@ -351,7 +351,9 @@ namespace BeatBanger_Autoplay
                                 string config = File.ReadAllText(fileList[typeRead][levelPackRead].level[levelRead].filepath);
 
                                 // Jsonify
-                                config = config.Replace("\n", "").Replace("\r", "").Replace("[main]data=", "{\"data\":") + "}";
+                                config = config.Replace("\n", "").Replace("\r", "");
+                                config = "{\"data\":" + config.Remove(0, config.IndexOf("{"));
+                                config = config.Remove(config.LastIndexOf("}") + 1) + "}";
 
                                 notesJSON = JObject.Parse(config);
                                 difficulties.Clear();
