@@ -13,7 +13,8 @@ If the exe is in the game folder when started it'll figure everything out on its
 The Reload button: hooks into the game and memory and reloads the in-game hotkeys(if you changed them)<br>
 The Pause button stops the keyboard input. Useful if you want to play yourself for a bit or train a specific part of a level.
 
-V2.2: Adding new mods to your game is now also handled automatically.
+V2.2: Adding new mods to your game is now also handled automatically.<br>
+EXPERIMENTAL: Added speed adjustment (dropdown) between buttons. In-Game when selecting a difficulty adjust speed by pressing Key 5/6 (Q/E). Select the speed in the dropdown before starting the difficulty with the selected speed.
 
 If everything is hooked and loaded you can just start any level in the game and watch it play itself.
 
