@@ -39,24 +39,35 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="40"/>
+            <RowDefinition Height="45"/>
             <RowDefinition Height="3"/>
-            <RowDefinition Height="55*"/>
-            <RowDefinition Height="200*"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*"/>
-            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="5*"/>
+            <ColumnDefinition Width="4*"/>
+            <ColumnDefinition Width="5*"/>
         </Grid.ColumnDefinitions>
 
         <Button Grid.Row="0" Content="Reload" Grid.Column="0" Margin="5" Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="Reload_Click" />
+        <ComboBox x:Name="SpeedPick" Grid.Row="0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,5,0,5" SelectionChanged="SpeedPick_Changer" >
+            <ComboBoxItem Content="1,0" IsSelected="True"/>
+            <ComboBoxItem Content="1,5"/>
+            <ComboBoxItem Content="2,0"/>
+            <ComboBoxItem Content="2,5"/>
+            <ComboBoxItem Content="3,0"/>
+            <ComboBoxItem Content="4,0"/>
+            <ComboBoxItem Content="5,0"/>
+            <ComboBoxItem Content="6,0"/>
+        </ComboBox>
         <ToggleButton Template="{DynamicResource ToggleButtonControlTemplate1}"
-                      x:Name="PauseButton" Grid.Row="0" Padding="0" Content="Pause" Grid.Column="1" Margin="5" ToggleButton.Checked="Pause_Click" ToggleButton.Unchecked="Pause_UnClick" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-        <TextBox IsReadOnly="True" Grid.Row="2" Grid.ColumnSpan="2" x:Name="Level_Textblock" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" VerticalContentAlignment="Center" Margin="5" />
-        <TextBox IsReadOnly="True" Grid.Row="3" Grid.ColumnSpan="2" x:Name="Notes_Textblock" HorizontalAlignment="Stretch" TextWrapping="Wrap" VerticalAlignment="Stretch" Margin="5"/>
+                      x:Name="PauseButton" Grid.Row="0" Padding="0" Content="Pause" Grid.Column="2" Margin="5" ToggleButton.Checked="Pause_Click" ToggleButton.Unchecked="Pause_UnClick" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        <TextBox IsReadOnly="True" Grid.Row="2" Grid.ColumnSpan="3" x:Name="Level_Textblock" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" VerticalContentAlignment="Center" Margin="5" />
+        <TextBox IsReadOnly="True" Grid.Row="3" Grid.ColumnSpan="3" x:Name="Notes_Textblock" HorizontalAlignment="Stretch" TextWrapping="Wrap" VerticalAlignment="Stretch" Margin="5" />
 
-        <GridSplitter x:Name="State_Display" Background="DarkSeaGreen" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"  Margin="5,0,5,0" />
-
+        <GridSplitter x:Name="State_Display" Background="DarkSeaGreen" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"  Margin="5,0,5,0" />
+        
     </Grid>
 
 

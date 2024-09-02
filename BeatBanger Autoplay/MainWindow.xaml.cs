@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
 
 namespace BeatBanger_Autoplay
@@ -74,10 +75,12 @@ namespace BeatBanger_Autoplay
     public partial class MainWindow : Window
     {
         int fileCount = 0;
+        int fileOffset = 0;
         List<LevelPack>[] fileList = new List<LevelPack>[2] { new List<LevelPack>(), new List<LevelPack>() };
 
         int levelCount = 0;
         double levelDelay = 0.0;
+        double speedMod = 1.0;
         List<string> difficulties = new List<string>();
         JObject notesJSON;
         List<List<Keyvent>> timesheet = new List<List<Keyvent>>();
@@ -133,6 +136,8 @@ namespace BeatBanger_Autoplay
         { try { paused = true; State_Display.Background = System.Windows.Media.Brushes.IndianRed; } catch (Exception ex) { errorMessage(ex); } }
         private void Pause_UnClick(object sender, RoutedEventArgs e)
         { try { paused = false; State_Display.Background = System.Windows.Media.Brushes.DarkSeaGreen; } catch (Exception ex) { errorMessage(ex); } }
+        private void SpeedPick_Changer(object sender, SelectionChangedEventArgs e)
+        { try { LoadNotes().Wait(); } catch (Exception ex) { errorMessage(ex); } }
         #endregion
 
         #region General-Functions
@@ -255,8 +260,9 @@ namespace BeatBanger_Autoplay
                     {
                         List<string> tempList = Directory.GetFiles(gameFolder, "notes.cfg", SearchOption.AllDirectories).ToList();
 
-                        if (tempList.Count() != fileCount)
+                        if (tempList.Count() - fileOffset != fileCount)
                         {
+                            fileCount = 0;
                             fileList[0].Clear();
                             fileList[1].Clear();
 
@@ -299,7 +305,7 @@ namespace BeatBanger_Autoplay
                                     JObject actObj = JObject.Parse(act);
 
 
-                                    tempLevel.levelDelay = settingsObj["data"]["song_offset"].Value<double>();
+                                    tempLevel.levelDelay = settingsObj["data"]["song_offset"].Value<double>() * 1000.0;
                                     tempLevel.levelIndex = metaObj["data"]["level_index"].Value<int>();
                                     tempLevel.levelName = metaObj["data"]["level_name"].Value<string>();
                                     tempLevel.levelIdentifyer = GetLevelName(file);
@@ -310,8 +316,10 @@ namespace BeatBanger_Autoplay
                                     tempPack.level.Add(tempLevel);
 
                                     fileList[tempType].Add(tempPack);
+                                    fileCount++;
                                 }
                             }
+                            fileOffset = tempList.Count - fileCount;
 
                             fileList[0] = fileList[0].OrderBy(index => index.actIndex).ThenBy(name => name.packName).ToList();
                             foreach (LevelPack pack in fileList[0])
@@ -320,9 +328,9 @@ namespace BeatBanger_Autoplay
                             fileList[1] = fileList[1].OrderBy(index => index.actIndex).ThenBy(name => name.packName).ToList();
                             foreach (LevelPack pack in fileList[1])
                                 pack.level = pack.level.OrderBy(index => index.levelIndex).ThenBy(name => name.levelName).ToList();
-
-                            fileCount = tempList.Count();
                         }
+
+                        fileOffset = tempList.Count - fileCount;
 
                         ReadProcessMemory(_processHandle, _dataAddress, dataBuffer, 22 * 8 * sizeof(byte), out _);
 
@@ -340,34 +348,38 @@ namespace BeatBanger_Autoplay
 
                         if (fileList.Length > typeRead && fileList[typeRead].Count > levelPackRead && fileList[typeRead][levelPackRead].level.Count > levelRead)
                         {
-                            Dispatcher.BeginInvoke(() => Level_Textblock.Text = "Level: " + fileList[typeRead][levelPackRead].level[levelRead].levelName);
-
                             if (oldLevel != levelRead || oldPack != levelPackRead || oldType != typeRead)
                             {
                                 cancleRun = true;
 
+                                Dispatcher.BeginInvoke(() => Level_Textblock.Text = "Level: " + fileList[typeRead][levelPackRead].level[levelRead].levelName).Wait();
+                                Dispatcher.BeginInvoke(() => { SpeedPick.SelectedIndex = 0; }).Wait();
+
                                 oldLevel = levelRead; oldPack = levelPackRead; oldType = typeRead;
 
                                 string config = File.ReadAllText(fileList[typeRead][levelPackRead].level[levelRead].filepath);
-
-                                // Jsonify
-                                config = config.Replace("\n", "").Replace("\r", "");
-                                config = "{\"data\":" + config.Remove(0, config.IndexOf("{"));
-                                config = config.Remove(config.LastIndexOf("}") + 1) + "}";
-
-                                notesJSON = JObject.Parse(config);
-                                difficulties.Clear();
-                                difficulties = notesJSON["data"]["charts"].Children().Values<string>("name").ToList();
-
-                                levelDelay = fileList[typeRead][levelPackRead].level[levelRead].levelDelay;
-
-                                await LoadNotes();
-
-                                cancleRun = false;
-                                Task.Run(() =>
+                                if (config.Contains("charts"))
                                 {
-                                    run();
-                                });
+                                    // Jsonify
+                                    config = config.Replace("\n", "").Replace("\r", "");
+                                    config = "{\"data\":" + config.Remove(0, config.IndexOf("{"));
+                                    config = config.Remove(config.LastIndexOf("}") + 1) + "}";
+
+                                    notesJSON = JObject.Parse(config);
+                                    difficulties.Clear();
+
+                                    difficulties = notesJSON["data"]["charts"].Children().Values<string>("name").ToList();
+
+                                    levelDelay = fileList[typeRead][levelPackRead].level[levelRead].levelDelay;
+
+                                    await LoadNotes();
+
+                                    cancleRun = false;
+                                    Task.Run(() =>
+                                    {
+                                        run();
+                                    });
+                                }
                             }
                         }
                         await Task.Delay(100);
@@ -382,6 +394,9 @@ namespace BeatBanger_Autoplay
             timesheet.Clear();
             if (notesJSON != null)
             {
+                if (SpeedPick.IsInitialized)
+                    Dispatcher.Invoke(() => { speedMod = Double.Parse(SpeedPick.Text); });
+
                 if (difficulties.Count() != 0)
                     for (int i = 0; i < difficulties.Count; i++)
                     {
@@ -415,11 +430,11 @@ namespace BeatBanger_Autoplay
                                             break;
                                     }
 
-                                    pressKey.timestamp = ((note.Value<double>("timestamp") + levelDelay) * 1000.0);
+                                    pressKey.timestamp = levelDelay + ((note.Value<double>("timestamp") * 1000.0) / speedMod);
                                     if (note.Value<double>("hold_end_timestamp") != 0.0)
-                                        holdRelease.timestamp = ((note.Value<double>("hold_end_timestamp") + levelDelay) * 1000.0);
+                                        holdRelease.timestamp = levelDelay + ((note.Value<double>("hold_end_timestamp") * 1000.0) / speedMod);
                                     else
-                                        holdRelease.timestamp = ((note.Value<double>("timestamp") + levelDelay) * 1000.0 + 30.0);
+                                        holdRelease.timestamp = levelDelay + ((note.Value<double>("timestamp") * 1000.0 + 30.0) / speedMod);
 
                                     keys.Add(pressKey);
                                     keys.Add(holdRelease);
@@ -511,7 +526,7 @@ namespace BeatBanger_Autoplay
                     _windowHandle = Process.GetProcessesByName(processName)[0].MainWindowHandle;
                     if (_processHandle != IntPtr.Zero && _windowHandle != IntPtr.Zero)
                     {
-                        Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Game connected! \nHandles: P:" + _processHandle.ToString("X8") + " W:" + _windowHandle.ToString("X8") + "\n");
+                        Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Game connected! \nHandles: P:" + _processHandle.ToString("X8") + " W:" + _windowHandle.ToString("X8") + "\n").Wait();
                         memAddresses.Clear();
 
                         SYSTEM_INFO SI;
@@ -549,8 +564,8 @@ namespace BeatBanger_Autoplay
             string timePattern = "?? 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 ?? ?? ?? ?? ?? 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 ?? ?? ?? ?? 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 ?? ?? ?? ?? 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 ?? ?? ?? ?? 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1C 00 00 00 ?? ?? ?? ??";
             _timeAddress = ScanMemoryBMH(timePattern) - 192;
 
-            if (_timeAddress != IntPtr.Zero) { Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Time hooked! \nAddress: " + _timeAddress.ToString("X8") + "\n"); }
-            else { Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Time not found \n"); }
+            if (_timeAddress != IntPtr.Zero) { Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Time hooked! \nAddress: " + _timeAddress.ToString("X8") + "\n").Wait(); }
+            else { Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Time not found \n").Wait(); }
 
             string dataPattern =
                 "?? 00 00 00 00 00 00 00 " +        //Selector Story/Mod  0/1
@@ -577,8 +592,8 @@ namespace BeatBanger_Autoplay
                 "?? 00 00 00 00 00 00 00";          //Selector ModDifficulty
             _dataAddress = ScanMemoryBMH(dataPattern);
 
-            if (_dataAddress != IntPtr.Zero) { Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Data hooked! \nAddress: " + _dataAddress.ToString("X8") + "\n"); }
-            else { Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Data not found - try restarting the game if this happenes again after pressing reload\n"); }
+            if (_dataAddress != IntPtr.Zero) { Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Data hooked! \nAddress: " + _dataAddress.ToString("X8") + "\n").Wait(); }
+            else { Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Data not found - try restarting the game if this happenes again after pressing reload\n").Wait(); }
 
             if (_timeAddress == IntPtr.Zero + 192 && _dataAddress == IntPtr.Zero)
             {
