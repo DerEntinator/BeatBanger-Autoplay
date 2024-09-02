@@ -22,4 +22,4 @@ Have fun :D!
 
 Note: You'll probably get an error message when going to act 2 of the story because all the necessary files are already present but don't contain the proper values, just click the error away and go back to the other levels.
 
-![image](https://github.com/user-attachments/assets/ae19990b-c41a-48a6-b65b-d4e5758aba67)
+![image](https://github.com/user-attachments/assets/8531e17c-2843-40b5-aecc-3db2c4b17865)
