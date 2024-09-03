@@ -20,6 +20,14 @@ namespace BeatBanger_Autoplay
         public bool down;
     }
 
+    public class ALTConfigFile
+    {
+        public string filepath = "";
+        public string level = "";
+        public string levelPack = "";
+        public string type = "";
+    }
+
     public class LevelPack
     {
         public string packName = "";
@@ -77,6 +85,8 @@ namespace BeatBanger_Autoplay
         int fileCount = 0;
         int fileOffset = 0;
         List<LevelPack>[] fileList = new List<LevelPack>[2] { new List<LevelPack>(), new List<LevelPack>() };
+        List<ALTConfigFile> ALTfileList = new List<ALTConfigFile>();
+        ALTConfigFile ALTcurrentLevel = new ALTConfigFile();
 
         int levelCount = 0;
         double levelDelay = 0.0;
@@ -124,7 +134,7 @@ namespace BeatBanger_Autoplay
 
             Task.Run(() =>
             {
-                getLevel();
+                ALTgetLevel();
             });
         }
 
@@ -381,6 +391,87 @@ namespace BeatBanger_Autoplay
                                     });
                                 }
                             }
+                        }
+                        await Task.Delay(100);
+                    }
+                }
+                catch (Exception ex) { errorMessage(ex); }
+            }
+        }
+
+        private async Task ALTgetLevel()
+        {
+            while (true)
+            {
+                try
+                {
+                    if (gameFolder != "ERROR" && _processHandle != IntPtr.Zero && _windowHandle != IntPtr.Zero && _timeAddress != IntPtr.Zero && _dataAddress != IntPtr.Zero)
+                    {
+
+                        ALTfileList.Clear();
+                        List<string> ALTtempList = Directory.GetFiles(gameFolder, "notes.cfg", SearchOption.AllDirectories).ToList();
+
+                        foreach (string file in ALTtempList)
+                        {
+                            ALTConfigFile temp = new ALTConfigFile();
+                            temp.filepath = file;
+                            temp.level = GetLevelName(file);
+                            temp.levelPack = GetLevelPackName(file);
+                            temp.type = GetTypeName(file);
+                            ALTfileList.Add(temp);
+                        }
+
+                        string ALToldLastAccess = ALTcurrentLevel.filepath;
+
+                        DateTime ALTlastAccess = DateTime.MinValue;
+                        foreach (var file in ALTfileList)
+                        {
+                            if (ALTlastAccess < File.GetLastAccessTimeUtc(file.filepath))
+                            {
+                                ALTcurrentLevel = file;
+                                ALTlastAccess = File.GetLastAccessTimeUtc(file.filepath);
+                            }
+                        }
+
+                        Dispatcher.BeginInvoke(() => Level_Textblock.Text = "Level: " + GetLevelName(ALTcurrentLevel.filepath));
+                        if (ALToldLastAccess != ALTcurrentLevel.filepath)
+                        {
+                            cancleRun = true;
+
+                            Dispatcher.BeginInvoke(() => Level_Textblock.Text = "Level: " + ALTcurrentLevel.level);
+                            Dispatcher.BeginInvoke(() => { SpeedPick.SelectedIndex = 0; }).Wait();
+
+
+                            string config = File.ReadAllText(ALTcurrentLevel.filepath);
+                            if (config.Contains("charts"))
+                            {
+                                string settings = File.ReadAllText(GetSettingsPath(ALTcurrentLevel.filepath));
+                                settings = settings.Replace("\n", "").Replace("\r", "");
+                                settings = "{\"data\":" + settings.Remove(0, settings.IndexOf("{"));
+                                settings = settings.Remove(settings.LastIndexOf("}") + 1) + "}";
+                                JObject settingsObj = JObject.Parse(settings);
+
+                                // Jsonify
+                                config = config.Replace("\n", "").Replace("\r", "");
+                                config = "{\"data\":" + config.Remove(0, config.IndexOf("{"));
+                                config = config.Remove(config.LastIndexOf("}") + 1) + "}";
+
+                                notesJSON = JObject.Parse(config);
+                                difficulties.Clear();
+
+                                difficulties = notesJSON["data"]["charts"].Children().Values<string>("name").ToList();
+
+                                levelDelay = settingsObj["data"]["song_offset"].Value<double>() * 1000.0;
+
+                                await LoadNotes();
+
+                                cancleRun = false;
+                                Task.Run(() =>
+                                {
+                                    run();
+                                });
+                            }
+
                         }
                         await Task.Delay(100);
                     }
