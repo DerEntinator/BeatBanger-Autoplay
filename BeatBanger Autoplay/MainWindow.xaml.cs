@@ -134,7 +134,7 @@ namespace BeatBanger_Autoplay
 
             Task.Run(() =>
             {
-                getLevel();
+                ALTgetLevel();     //ALTgetLevel() - alternative level loading
             });
         }
 
@@ -407,18 +407,21 @@ namespace BeatBanger_Autoplay
                 {
                     if (gameFolder != "ERROR" && _processHandle != IntPtr.Zero && _windowHandle != IntPtr.Zero && _timeAddress != IntPtr.Zero && _dataAddress != IntPtr.Zero)
                     {
-
-                        ALTfileList.Clear();
                         List<string> ALTtempList = Directory.GetFiles(gameFolder, "notes.cfg", SearchOption.AllDirectories).ToList();
 
-                        foreach (string file in ALTtempList)
+                        if (levelCount != ALTtempList.Count)
                         {
-                            ALTConfigFile temp = new ALTConfigFile();
-                            temp.filepath = file;
-                            temp.level = GetLevelName(file);
-                            temp.levelPack = GetLevelPackName(file);
-                            temp.type = GetTypeName(file);
-                            ALTfileList.Add(temp);
+                            ALTfileList.Clear();
+                            foreach (string file in ALTtempList)
+                            {
+                                ALTConfigFile temp = new ALTConfigFile();
+                                temp.filepath = file;
+                                temp.level = GetLevelName(file);
+                                temp.levelPack = GetLevelPackName(file);
+                                temp.type = GetTypeName(file);
+                                ALTfileList.Add(temp);
+                            }
+                            levelCount = ALTtempList.Count;
                         }
 
                         string ALToldLastAccess = ALTcurrentLevel.filepath;
@@ -451,6 +454,8 @@ namespace BeatBanger_Autoplay
                                 settings = settings.Remove(settings.LastIndexOf("}") + 1) + "}";
                                 JObject settingsObj = JObject.Parse(settings);
 
+                                levelDelay = settingsObj["data"]["song_offset"].Value<double>() * 1000.0;
+
                                 // Jsonify
                                 config = config.Replace("\n", "").Replace("\r", "");
                                 config = "{\"data\":" + config.Remove(0, config.IndexOf("{"));
@@ -461,8 +466,6 @@ namespace BeatBanger_Autoplay
 
                                 difficulties = notesJSON["data"]["charts"].Children().Values<string>("name").ToList();
 
-                                levelDelay = settingsObj["data"]["song_offset"].Value<double>() * 1000.0;
-
                                 await LoadNotes();
 
                                 cancleRun = false;
@@ -471,12 +474,12 @@ namespace BeatBanger_Autoplay
                                     run();
                                 });
                             }
-
                         }
-                        await Task.Delay(100);
+
                     }
                 }
                 catch (Exception ex) { errorMessage(ex); }
+                await Task.Delay(100);
             }
         }
 
