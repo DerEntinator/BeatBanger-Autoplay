@@ -134,7 +134,7 @@ namespace BeatBanger_Autoplay
 
             Task.Run(() =>
             {
-                ALTgetLevel();
+                getLevel();
             });
         }
 
