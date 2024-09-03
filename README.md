@@ -20,4 +20,14 @@ If everything is hooked and loaded you can just start any level in the game and 
 
 Have fun :D!
 
+# Alternative Version
+If the standard version didn't work for you there is now also an alternative version of the autoplayer that has a different method to get the currently played level.
+
+**NOTE for the Alt-Version:**<br>
+If the level name does not update when you switch levels in the game, a certain NTFS filesystem setting in Windows is probably set wrong.<br>
+To fix this open regedit and go to "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem".<br>
+Then change the value of "NtfsDisableLastAccessUpdate" to 80000000 (hex) to ensure it always updates the last time a file has been  accessed.<br>
+No need to restart the computer, just restart the game and restart the autoplayer and it should work.<br>
+[NtfsDisableLastAccessUpdate Documentation](https://winaero.com/disable-ntfs-last-access-time-updates-in-windows-10/)
+
 ![image](https://github.com/user-attachments/assets/8531e17c-2843-40b5-aecc-3db2c4b17865)
