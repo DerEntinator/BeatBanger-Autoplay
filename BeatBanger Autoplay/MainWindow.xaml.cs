@@ -486,6 +486,7 @@ namespace BeatBanger_Autoplay
         private async Task LoadNotes()
         {
             timesheet.Clear();
+            string otp = "";
             if (notesJSON != null)
             {
                 if (SpeedPick.IsInitialized)
@@ -494,6 +495,7 @@ namespace BeatBanger_Autoplay
                 if (difficulties.Count() != 0)
                     for (int i = 0; i < difficulties.Count; i++)
                     {
+                        Dispatcher.BeginInvoke(() => { Notes_Textblock.Text = ""; }).Wait();
                         List<JToken> rawNotes = notesJSON["data"]["charts"][i]["notes"].ToList();
                         List<Keyvent> keys = new List<Keyvent>();
                         if (rawNotes.Count() != 0)
@@ -532,12 +534,15 @@ namespace BeatBanger_Autoplay
 
                                     keys.Add(pressKey);
                                     keys.Add(holdRelease);
+                                    otp += "Key: " + pressKey.key + " Down: " + pressKey.down + " TS: " + Math.Round(pressKey.timestamp) + "\n";
+                                    otp += "Key: " + holdRelease.key + " Down: " + holdRelease.down + " TS: " + Math.Round(holdRelease.timestamp) + "\n";
                                 }
                             }
 
                         keys.Sort((s1, s2) => s1.timestamp.CompareTo(s2.timestamp));
                         timesheet.Add(keys);
                     }
+                Dispatcher.BeginInvoke(() => { Notes_Textblock.Text += otp; }).Wait();
             }
             clearMemory();
         }
@@ -573,6 +578,7 @@ namespace BeatBanger_Autoplay
                                     {
                                         if (timeRead == 0.0)
                                             goto restartLevel;
+                                        Dispatcher.BeginInvoke(() => { Level_Textblock.Text = Math.Round(timeRead).ToString(); }).Wait();
                                         await Task.Delay(pollingDelay);
                                         ReadProcessMemory(_processHandle, _timeAddress, timeBuffer, sizeof(double), out _);
                                         timeRead = BitConverter.ToDouble(timeBuffer) * 1000.0;
@@ -655,8 +661,30 @@ namespace BeatBanger_Autoplay
             _timeAddress = IntPtr.Zero;
             _dataAddress = IntPtr.Zero;
 
-            string timePattern = "?? 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 ?? ?? ?? ?? ?? 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 ?? ?? ?? ?? 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 ?? ?? ?? ?? 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 ?? ?? ?? ?? 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1C 00 00 00 ?? ?? ?? ??";
-            _timeAddress = ScanMemoryBMH(timePattern) - 192;
+            string timePattern =
+                "?? ?? ?? ?? ?? ?? ?? ?? " +
+                "00 00 00 00 00 00 00 00 " +
+                "03 00 00 00 09 00 00 00 " +
+                "?? ?? ?? ?? ?? ?? ?? ?? " +
+                "00 00 00 00 00 00 00 00 " +
+                "02 00 00 00 16 00 00 00 " +
+                "00 00 00 00 00 00 00 00 " +
+                "00 00 00 00 00 00 00 00 " +
+                "02 00 00 00 08 00 00 00 " +
+                "?? ?? 00 00 00 00 00 00 " +
+                "00 00 00 00 00 00 00 00 " +
+                "03 00 00 00 07 00 00 01 " +
+                "?? ?? ?? ?? ?? ?? ?? ?? " +
+                "00 00 00 00 00 00 00 00 " +
+                "03 00 00 00 02 00 00 01 " +
+                "00 00 00 ?? ?? ?? ?? ?? " +
+                "00 00 00 00 00 00 00 00 " +
+                "1C 00 00 00 0A 00 00 00 " +
+                "?? ?? ?? ?? ?? ?? 00 00 " +
+                "00 00 00 00 00 00 00 00 " +
+                "01 00 00 00 01 00 00 00 " +
+                "00 00 00 00 00 00 00 00";
+            _timeAddress = ScanMemoryBMH(timePattern);
 
             if (_timeAddress != IntPtr.Zero) { Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Time hooked! \nAddress: " + _timeAddress.ToString("X8") + "\n").Wait(); }
             else { Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Time not found \n").Wait(); }
