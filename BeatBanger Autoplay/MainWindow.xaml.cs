@@ -90,7 +90,6 @@ namespace BeatBanger_Autoplay
 
         int levelCount = 0;
         double levelDelay = 0.0;
-        double speedMod = 1.0;
         List<string> difficulties = new List<string>();
         JObject notesJSON;
         List<List<Keyvent>> timesheet = new List<List<Keyvent>>();
@@ -134,7 +133,7 @@ namespace BeatBanger_Autoplay
 
             Task.Run(() =>
             {
-                ALTgetLevel();     //ALTgetLevel() - alternative level loading
+                getLevel();     //ALTgetLevel() - alternative level loading
             });
         }
 
@@ -252,7 +251,7 @@ namespace BeatBanger_Autoplay
             catch (Exception ex) { errorMessage(ex); }
         }
 
-        private async Task getLevel()
+        private async Task ALTgetLevel()
         {
             byte[] dataBuffer = new byte[22 * 8];
             int oldType = -1;
@@ -363,7 +362,6 @@ namespace BeatBanger_Autoplay
                                 cancleRun = true;
 
                                 Dispatcher.BeginInvoke(() => Level_Textblock.Text = "Level: " + fileList[typeRead][levelPackRead].level[levelRead].levelName).Wait();
-                                Dispatcher.BeginInvoke(() => { SpeedPick.SelectedIndex = 0; }).Wait();
 
                                 oldLevel = levelRead; oldPack = levelPackRead; oldType = typeRead;
 
@@ -399,7 +397,7 @@ namespace BeatBanger_Autoplay
             }
         }
 
-        private async Task ALTgetLevel()
+        private async Task getLevel()
         {
             while (true)
             {
@@ -442,7 +440,6 @@ namespace BeatBanger_Autoplay
                             cancleRun = true;
 
                             Dispatcher.BeginInvoke(() => Level_Textblock.Text = "Level: " + ALTcurrentLevel.level);
-                            Dispatcher.BeginInvoke(() => { SpeedPick.SelectedIndex = 0; }).Wait();
 
 
                             string config = File.ReadAllText(ALTcurrentLevel.filepath);
@@ -486,16 +483,11 @@ namespace BeatBanger_Autoplay
         private async Task LoadNotes()
         {
             timesheet.Clear();
-            string otp = "";
             if (notesJSON != null)
             {
-                if (SpeedPick.IsInitialized)
-                    Dispatcher.Invoke(() => { speedMod = Double.Parse(SpeedPick.Text); });
-
                 if (difficulties.Count() != 0)
                     for (int i = 0; i < difficulties.Count; i++)
                     {
-                        Dispatcher.BeginInvoke(() => { Notes_Textblock.Text = ""; }).Wait();
                         List<JToken> rawNotes = notesJSON["data"]["charts"][i]["notes"].ToList();
                         List<Keyvent> keys = new List<Keyvent>();
                         if (rawNotes.Count() != 0)
@@ -526,23 +518,20 @@ namespace BeatBanger_Autoplay
                                             break;
                                     }
 
-                                    pressKey.timestamp = levelDelay + ((note.Value<double>("timestamp") * 1000.0) / speedMod);
+                                    pressKey.timestamp = levelDelay + (note.Value<double>("timestamp") * 1000.0);
                                     if (note.Value<double>("hold_end_timestamp") != 0.0)
-                                        holdRelease.timestamp = levelDelay + ((note.Value<double>("hold_end_timestamp") * 1000.0) / speedMod);
+                                        holdRelease.timestamp = levelDelay + (note.Value<double>("hold_end_timestamp") * 1000.0);
                                     else
-                                        holdRelease.timestamp = levelDelay + ((note.Value<double>("timestamp") * 1000.0 + 30.0) / speedMod);
+                                        holdRelease.timestamp = levelDelay + (note.Value<double>("timestamp") * 1000.0 + 30.0);
 
                                     keys.Add(pressKey);
                                     keys.Add(holdRelease);
-                                    otp += "Key: " + pressKey.key + " Down: " + pressKey.down + " TS: " + Math.Round(pressKey.timestamp) + "\n";
-                                    otp += "Key: " + holdRelease.key + " Down: " + holdRelease.down + " TS: " + Math.Round(holdRelease.timestamp) + "\n";
                                 }
                             }
 
                         keys.Sort((s1, s2) => s1.timestamp.CompareTo(s2.timestamp));
                         timesheet.Add(keys);
                     }
-                Dispatcher.BeginInvoke(() => { Notes_Textblock.Text += otp; }).Wait();
             }
             clearMemory();
         }
@@ -578,7 +567,6 @@ namespace BeatBanger_Autoplay
                                     {
                                         if (timeRead == 0.0)
                                             goto restartLevel;
-                                        Dispatcher.BeginInvoke(() => { Level_Textblock.Text = Math.Round(timeRead).ToString(); }).Wait();
                                         await Task.Delay(pollingDelay);
                                         ReadProcessMemory(_processHandle, _timeAddress, timeBuffer, sizeof(double), out _);
                                         timeRead = BitConverter.ToDouble(timeBuffer) * 1000.0;
