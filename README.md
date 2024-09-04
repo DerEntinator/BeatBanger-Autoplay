@@ -14,20 +14,18 @@ Adding new mods to your game is handled automatically.<br>
 The Reload button: hooks into the game and memory and reloads the in-game hotkeys(if you changed them)<br>
 The Pause button stops the keyboard input. Useful if you want to play yourself for a bit or train a specific part of a level.<br>
 
-EXPERIMENTAL: Speed adjustment (dropdown) between buttons. In-Game when selecting a difficulty adjust speed by pressing Key 5/6 (Q/E). Select the speed in the dropdown before starting the difficulty with the selected speed.
+**NOTE for the Alt-Version:**<br>
+If the level name does not update when you switch levels in the game, a certain NTFS filesystem setting in Windows is probably set wrong.<br>
+To fix this open Regedit and go to "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem".<br>
+Then change the value of "NtfsDisableLastAccessUpdate" to 80000000 (hex) to ensure it always updates the last time a file has been  accessed.<br>
+No need to restart the computer, just restart the game and restart the autoplayer and it should work.<br>
+[NtfsDisableLastAccessUpdate Documentation](https://winaero.com/disable-ntfs-last-access-time-updates-in-windows-10/)
 
 If everything is hooked and loaded you can just start any level in the game and watch it play itself.
 
 Have fun :D!
 
 # Alternative Version
-If the standard version didn't work for you there is now also an alternative version of the autoplayer that has a different method to get the currently played level.
-
-**NOTE for the Alt-Version:**<br>
-If the level name does not update when you switch levels in the game, a certain NTFS filesystem setting in Windows is probably set wrong.<br>
-To fix this open regedit and go to "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem".<br>
-Then change the value of "NtfsDisableLastAccessUpdate" to 80000000 (hex) to ensure it always updates the last time a file has been  accessed.<br>
-No need to restart the computer, just restart the game and restart the autoplayer and it should work.<br>
-[NtfsDisableLastAccessUpdate Documentation](https://winaero.com/disable-ntfs-last-access-time-updates-in-windows-10/)
+If the standard version didn't work for you there is also an alternative, experimental version of the autoplayer that has a different method to get the currently played level.
 
 ![image](https://github.com/user-attachments/assets/8531e17c-2843-40b5-aecc-3db2c4b17865)
