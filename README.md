@@ -3,9 +3,13 @@
 Simple BeatBanger auto-player with a WPF GUI for Windows 7+. <br>
 (In principle just sending emulated keyboard presses to the game timed to the underlying notes.cfg)
 
+## Versions
 To run the standard version of the software you might need to install a specific .net runtime. If you don't have it already you'll get a prompt to download it from Microsoft when you launch the software. <br>
-If you don't want to deal with the runtime directly there is also the self-contained (_SC) release you can choose.
+If you don't want to deal with the runtime directly there is also the self-contained (_SC) release you can choose.<br>
 
+If the standard version didn't work for you there is also an alternative, experimental version of the autoplayer that has a different method to get the currently played level.
+
+## Using the App
 With V2.0 everything is prettier and better and ✨Just Works✨,... i hope...
 
 If the exe is in the game folder when started it'll figure everything out on its own, if it's not you'll get a folder select where you have to select the game folder manually.<br>
@@ -26,7 +30,3 @@ If everything is hooked and loaded you can just start any level in the game and 
 Have fun :D!
 
 ![image](https://github.com/user-attachments/assets/7f450f9e-43cb-4c30-aad7-43738df87fa6)
-
-
-# Alternative Version
-If the standard version didn't work for you there is also an alternative, experimental version of the autoplayer that has a different method to get the currently played level.
