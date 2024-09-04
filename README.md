@@ -25,7 +25,8 @@ If everything is hooked and loaded you can just start any level in the game and 
 
 Have fun :D!
 
+![image](https://github.com/user-attachments/assets/7f450f9e-43cb-4c30-aad7-43738df87fa6)
+
+
 # Alternative Version
 If the standard version didn't work for you there is also an alternative, experimental version of the autoplayer that has a different method to get the currently played level.
-
-![image](https://github.com/user-attachments/assets/8531e17c-2843-40b5-aecc-3db2c4b17865)
