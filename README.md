@@ -21,8 +21,7 @@ If everything is hooked and loaded you can just start any level in the game and 
 Have fun :D!
 
 # Alternative Version
-If the standard version didn't work for you there is now also an alternative version of the autoplayer that has a different method to get the currently played level.<br>
-If you add mods while the Alt-Version is running it might give you an error-popup. Just ignore it and click ok, everything works fine. It's just a bit faster than Windows in doing its thing.
+If the standard version didn't work for you there is now also an alternative version of the autoplayer that has a different method to get the currently played level.
 
 **NOTE for the Alt-Version:**<br>
 If the level name does not update when you switch levels in the game, a certain NTFS filesystem setting in Windows is probably set wrong.<br>
