@@ -14,7 +14,7 @@ Adding new mods to your game is handled automatically.<br>
 The Reload button: hooks into the game and memory and reloads the in-game hotkeys(if you changed them)<br>
 The Pause button stops the keyboard input. Useful if you want to play yourself for a bit or train a specific part of a level.<br>
 
-**NOTE for the Alt-Version:**<br>
+**NOTE:**<br>
 If the level name does not update when you switch levels in the game, a certain NTFS filesystem setting in Windows is probably set wrong.<br>
 To fix this open Regedit and go to "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem".<br>
 Then change the value of "NtfsDisableLastAccessUpdate" to 80000000 (hex) to ensure it always updates the last time a file has been  accessed.<br>
