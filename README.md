@@ -12,7 +12,7 @@ If the standard version didn't work for you there is also an alternative, experi
 ## Using the App
 With V2.0 everything is prettier and better and ✨Just Works✨,... i hope...
 
-If the exe is in the game folder when started it'll figure everything out on its own, if it's not you'll get a folder select where you have to select the game folder manually.<br>
+If the exe is in the game folder when started it'll figure everything out on its own, if it's not you'll get a file select where you have to select the game's exe manually.<br>
 Adding new mods to your game is handled automatically.<br>
 
 The Reload button: hooks into the game and memory and reloads the in-game hotkeys(if you changed them)<br>
