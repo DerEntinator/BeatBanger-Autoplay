@@ -124,13 +124,7 @@ namespace BeatBanger_Autoplay
         {
             InitializeComponent();
 
-            ReloadKeys();
-            try
-            {
-                Reload().Wait();
-            }
-            catch (Exception ex) { errorMessage(ex); }
-
+            Reload();
             Task.Run(() =>
             {
                 getLevel();     //ALTgetLevel() - alternative level loading
@@ -139,7 +133,7 @@ namespace BeatBanger_Autoplay
 
         #region UI-Functions
         private void Reload_Click(object sender, RoutedEventArgs e)
-        { try { Reload().Wait(); } catch (Exception ex) { errorMessage(ex); } }
+        { try { Reload(); } catch (Exception ex) { errorMessage(ex); } }
 
         private void Pause_Click(object sender, RoutedEventArgs e)
         { try { paused = true; State_Display.Background = System.Windows.Media.Brushes.IndianRed; } catch (Exception ex) { errorMessage(ex); } }
@@ -161,21 +155,21 @@ namespace BeatBanger_Autoplay
                 else
                 {
                     CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-                    dialog.IsFolderPicker = true;
                     dialog.Multiselect = false;
-                    dialog.Title = "Select game folder!";
+                    dialog.Title = "Select game executable!";
                     ///Ask user for File selection///
                     if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                     {
-                        if (!File.Exists(dialog.FileName + "\\beatbanger.exe"))
+                        if (Path.GetFileName(dialog.FileName) != "beatbanger.exe")
                         {
                             gameFolder = "ERROR";
-                            Level_Textblock.Text = "ERROR! - bad folder - reload";
+                            Level_Textblock.Text = "ERROR! - game exe not selected - reload";
                             return false;
                         }
                         else
                         {
-                            gameFolder = dialog.FileName;
+                            gameFolder = Path.GetDirectoryName(dialog.FileName);
+                            Level_Textblock.Text = "";
                         }
                         return true;
                     }
@@ -186,7 +180,7 @@ namespace BeatBanger_Autoplay
             else { return true; }
         }
 
-        private async Task Reload()
+        private void Reload()
         {
             Notes_Textblock.Text = "";
 
