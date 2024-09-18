@@ -20,28 +20,12 @@ namespace BeatBanger_Autoplay
         public bool down;
     }
 
-    public class ALTConfigFile
+    public class ConfigFile
     {
         public string filepath = "";
         public string level = "";
         public string levelPack = "";
         public string type = "";
-    }
-
-    public class LevelPack
-    {
-        public string packName = "";
-        public List<Level> level = new List<Level>();
-        public int actIndex = 0;
-
-    }
-    public class Level
-    {
-        public string levelName = "";
-        public string levelIdentifyer = "";
-        public int levelIndex = 0;
-        public double levelDelay = 0.0;
-        public string filepath = "";
     }
 
     public class memSpace
@@ -84,9 +68,8 @@ namespace BeatBanger_Autoplay
     {
         int fileCount = 0;
         int fileOffset = 0;
-        List<LevelPack>[] fileList = new List<LevelPack>[2] { new List<LevelPack>(), new List<LevelPack>() };
-        List<ALTConfigFile> ALTfileList = new List<ALTConfigFile>();
-        ALTConfigFile ALTcurrentLevel = new ALTConfigFile();
+        List<ConfigFile> fileList = new List<ConfigFile>();
+        ConfigFile currentLevel = new ConfigFile();
 
         int levelCount = 0;
         double levelDelay = 0.0;
@@ -105,6 +88,7 @@ namespace BeatBanger_Autoplay
         const uint WM_KEYDOWN = 0x100;
         const uint WM_KEYUP = 0x0101;
 
+        bool levelLoaded = false;
         bool cancleRun = false;
         int pollingDelay = 1;
 
@@ -127,7 +111,7 @@ namespace BeatBanger_Autoplay
             Reload();
             Task.Run(() =>
             {
-                getLevel();     //ALTgetLevel() - alternative level loading
+                getLevel();     //getLevel() - ernative level loading
             });
         }
 
@@ -174,7 +158,7 @@ namespace BeatBanger_Autoplay
                         return true;
                     }
                     else
-                    { gameFolder = "ERROR"; Level_Textblock.Text = "ERROR! - no folder - reload"; return false; }
+                    { gameFolder = "ERROR"; Level_Textblock.Text = "ERROR! - nothing selected - reload"; return false; }
                 }
             }
             else { return true; }
@@ -245,152 +229,6 @@ namespace BeatBanger_Autoplay
             catch (Exception ex) { errorMessage(ex); }
         }
 
-        private async Task ALTgetLevel()
-        {
-            byte[] dataBuffer = new byte[22 * 8];
-            int oldType = -1;
-            int oldPack = -1;
-            int oldLevel = -1;
-            byte typeRead;
-            byte levelPackRead;
-            byte levelRead;
-
-            while (true)
-            {
-                try
-                {
-                    if (gameFolder != "ERROR" && _processHandle != IntPtr.Zero && _windowHandle != IntPtr.Zero && _timeAddress != IntPtr.Zero && _dataAddress != IntPtr.Zero)
-                    {
-                        List<string> tempList = Directory.GetFiles(gameFolder, "notes.cfg", SearchOption.AllDirectories).ToList();
-
-                        if (tempList.Count() - fileOffset != fileCount)
-                        {
-                            fileCount = 0;
-                            fileList[0].Clear();
-                            fileList[1].Clear();
-
-                            foreach (string file in tempList.ToArray())
-                            {
-                                if (File.Exists(GetActPath(file)) && File.Exists(GetMetaPath(file)) && File.Exists(GetSettingsPath(file)))
-                                {
-                                    LevelPack tempPack = new LevelPack();
-                                    Level tempLevel = new Level();
-
-                                    int tempType = 0;
-
-                                    if (GetTypeName(file) == "data")
-                                        tempType = 0;
-                                    else
-                                        tempType = 1;
-
-                                    if (fileList[tempType] != null && fileList[tempType].Count() != 0 && fileList[tempType].Any(LevelPack => LevelPack.packName == GetLevelPackName(file)))
-                                    {
-                                        tempPack = fileList[tempType].Find(LevelPack => LevelPack.packName == GetLevelPackName(file));
-                                        fileList[tempType].Remove(tempPack);
-                                    }
-
-                                    string meta = File.ReadAllText(GetMetaPath(file));
-                                    meta = meta.Replace("\n", "").Replace("\r", "");
-                                    meta = "{\"data\":" + meta.Remove(0, meta.IndexOf("{"));
-                                    meta = meta.Remove(meta.LastIndexOf("}") + 1) + "}";
-                                    JObject metaObj = JObject.Parse(meta);
-
-                                    string settings = File.ReadAllText(GetSettingsPath(file));
-                                    settings = settings.Replace("\n", "").Replace("\r", "");
-                                    settings = "{\"data\":" + settings.Remove(0, settings.IndexOf("{"));
-                                    settings = settings.Remove(settings.LastIndexOf("}") + 1) + "}";
-                                    JObject settingsObj = JObject.Parse(settings);
-
-                                    string act = File.ReadAllText(GetActPath(file));
-                                    act = act.Replace("\n", "").Replace("\r", "");
-                                    act = "{\"data\":" + act.Remove(0, act.IndexOf("{"));
-                                    act = act.Remove(act.LastIndexOf("}") + 1) + "}";
-                                    JObject actObj = JObject.Parse(act);
-
-
-                                    tempLevel.levelDelay = settingsObj["data"]["song_offset"].Value<double>() * 1000.0;
-                                    tempLevel.levelIndex = metaObj["data"]["level_index"].Value<int>();
-                                    tempLevel.levelName = metaObj["data"]["level_name"].Value<string>();
-                                    tempLevel.levelIdentifyer = GetLevelName(file);
-                                    tempLevel.filepath = file;
-
-                                    tempPack.actIndex = actObj["data"]["act_index"].Value<int>();
-                                    tempPack.packName = GetLevelPackName(file);
-                                    tempPack.level.Add(tempLevel);
-
-                                    fileList[tempType].Add(tempPack);
-                                    fileCount++;
-                                }
-                            }
-                            fileOffset = tempList.Count - fileCount;
-
-                            fileList[0] = fileList[0].OrderBy(index => index.actIndex).ThenBy(name => name.packName).ToList();
-                            foreach (LevelPack pack in fileList[0])
-                                pack.level = pack.level.OrderBy(index => index.levelIndex).ThenBy(name => name.levelName).ToList();
-
-                            fileList[1] = fileList[1].OrderBy(index => index.actIndex).ThenBy(name => name.packName).ToList();
-                            foreach (LevelPack pack in fileList[1])
-                                pack.level = pack.level.OrderBy(index => index.levelIndex).ThenBy(name => name.levelName).ToList();
-                        }
-
-                        fileOffset = tempList.Count - fileCount;
-
-                        ReadProcessMemory(_processHandle, _dataAddress, dataBuffer, 22 * 8 * sizeof(byte), out _);
-
-                        typeRead = dataBuffer[0 * 8];
-                        if (typeRead == 0)
-                        {
-                            levelPackRead = dataBuffer[3 * 8];
-                            levelRead = dataBuffer[6 * 8];
-                        }
-                        else
-                        {
-                            levelPackRead = dataBuffer[15 * 8];
-                            levelRead = dataBuffer[18 * 8];
-                        }
-
-                        if (fileList.Length > typeRead && fileList[typeRead].Count > levelPackRead && fileList[typeRead][levelPackRead].level.Count > levelRead)
-                        {
-                            if (oldLevel != levelRead || oldPack != levelPackRead || oldType != typeRead)
-                            {
-                                cancleRun = true;
-
-                                Dispatcher.BeginInvoke(() => Level_Textblock.Text = "Level: " + fileList[typeRead][levelPackRead].level[levelRead].levelName).Wait();
-
-                                oldLevel = levelRead; oldPack = levelPackRead; oldType = typeRead;
-
-                                string config = File.ReadAllText(fileList[typeRead][levelPackRead].level[levelRead].filepath);
-                                if (config.Contains("charts"))
-                                {
-                                    // Jsonify
-                                    config = config.Replace("\n", "").Replace("\r", "");
-                                    config = "{\"data\":" + config.Remove(0, config.IndexOf("{"));
-                                    config = config.Remove(config.LastIndexOf("}") + 1) + "}";
-
-                                    notesJSON = JObject.Parse(config);
-                                    difficulties.Clear();
-
-                                    difficulties = notesJSON["data"]["charts"].Children().Values<string>("name").ToList();
-
-                                    levelDelay = fileList[typeRead][levelPackRead].level[levelRead].levelDelay;
-
-                                    await LoadNotes();
-
-                                    cancleRun = false;
-                                    Task.Run(() =>
-                                    {
-                                        run();
-                                    });
-                                }
-                            }
-                        }
-                        await Task.Delay(100);
-                    }
-                }
-                catch (Exception ex) { errorMessage(ex); }
-            }
-        }
-
         private async Task getLevel()
         {
             while (true)
@@ -399,53 +237,58 @@ namespace BeatBanger_Autoplay
                 {
                     if (gameFolder != "ERROR" && _processHandle != IntPtr.Zero && _windowHandle != IntPtr.Zero && _timeAddress != IntPtr.Zero && _dataAddress != IntPtr.Zero)
                     {
-                        List<string> ALTtempList = Directory.GetFiles(gameFolder, "notes.cfg", SearchOption.AllDirectories).ToList();
+                        List<string> tempList = Directory.GetFiles(gameFolder, "notes.cfg", SearchOption.AllDirectories).ToList();
 
-                        if (levelCount != ALTtempList.Count)
+                        if (levelCount != tempList.Count)
                         {
-                            ALTfileList.Clear();
-                            foreach (string file in ALTtempList)
+                            fileList.Clear();
+                            foreach (string file in tempList)
                             {
-                                ALTConfigFile temp = new ALTConfigFile();
+                                ConfigFile temp = new ConfigFile();
                                 temp.filepath = file;
                                 temp.level = GetLevelName(file);
                                 temp.levelPack = GetLevelPackName(file);
                                 temp.type = GetTypeName(file);
-                                ALTfileList.Add(temp);
+                                fileList.Add(temp);
                             }
-                            levelCount = ALTtempList.Count;
+                            levelCount = tempList.Count;
                         }
 
-                        string ALToldLastAccess = ALTcurrentLevel.filepath;
+                        string oldLastAccess = currentLevel.filepath;
 
-                        DateTime ALTlastAccess = DateTime.MinValue;
-                        foreach (var file in ALTfileList)
+                        DateTime lastAccess = DateTime.MinValue;
+                        foreach (var file in fileList)
                         {
-                            if (ALTlastAccess < File.GetLastAccessTimeUtc(file.filepath))
+                            if (lastAccess < File.GetLastAccessTimeUtc(file.filepath))
                             {
-                                ALTcurrentLevel = file;
-                                ALTlastAccess = File.GetLastAccessTimeUtc(file.filepath);
+                                currentLevel = file;
+                                lastAccess = File.GetLastAccessTimeUtc(file.filepath);
                             }
                         }
 
-                        Dispatcher.BeginInvoke(() => Level_Textblock.Text = "Level: " + GetLevelName(ALTcurrentLevel.filepath));
-                        if (ALToldLastAccess != ALTcurrentLevel.filepath)
+                        if (levelLoaded == false || oldLastAccess != currentLevel.filepath)
                         {
                             cancleRun = true;
 
-                            Dispatcher.BeginInvoke(() => Level_Textblock.Text = "Level: " + ALTcurrentLevel.level);
-
-
-                            string config = File.ReadAllText(ALTcurrentLevel.filepath);
+                            string config = File.ReadAllText(currentLevel.filepath);
                             if (config.Contains("charts"))
                             {
-                                string settings = File.ReadAllText(GetSettingsPath(ALTcurrentLevel.filepath));
+                                string settings = File.ReadAllText(GetSettingsPath(currentLevel.filepath));
                                 settings = settings.Replace("\n", "").Replace("\r", "");
                                 settings = "{\"data\":" + settings.Remove(0, settings.IndexOf("{"));
                                 settings = settings.Remove(settings.LastIndexOf("}") + 1) + "}";
                                 JObject settingsObj = JObject.Parse(settings);
 
                                 levelDelay = settingsObj["data"]["song_offset"].Value<double>() * 1000.0;
+
+                                string meta = File.ReadAllText(GetMetaPath(currentLevel.filepath));
+                                meta = meta.Replace("\n", "").Replace("\r", "");
+                                meta = "{\"data\":" + meta.Remove(0, meta.IndexOf("{"));
+                                meta = meta.Remove(meta.LastIndexOf("}") + 1) + "}";
+                                JObject metaObj = JObject.Parse(meta);
+
+                                currentLevel.level = metaObj["data"]["level_name"].Value<string>();
+                                Dispatcher.BeginInvoke(() => Level_Textblock.Text = "Level: " + currentLevel.level);
 
                                 // Jsonify
                                 config = config.Replace("\n", "").Replace("\r", "");
@@ -460,6 +303,7 @@ namespace BeatBanger_Autoplay
                                 await LoadNotes();
 
                                 cancleRun = false;
+                                levelLoaded = true;
                                 Task.Run(() =>
                                 {
                                     run();
@@ -469,7 +313,7 @@ namespace BeatBanger_Autoplay
 
                     }
                 }
-                catch (Exception ex) { errorMessage(ex); }
+                catch (Exception ex) { levelLoaded = false; /*errorMessage(ex);*/ }
                 await Task.Delay(100);
             }
         }
@@ -646,26 +490,17 @@ namespace BeatBanger_Autoplay
             string timePattern =
                 "?? ?? ?? ?? ?? ?? ?? ?? " +
                 "00 00 00 00 00 00 00 00 " +
-                "03 00 00 00 ?? 00 00 00 " +
+                "03 00 00 00 ?? ?? ?? ?? " +
                 "?? ?? ?? ?? ?? ?? ?? ?? " +
                 "00 00 00 00 00 00 00 00 " +
-                "02 00 00 00 ?? 00 00 00 " +
+                "02 00 00 00 ?? ?? ?? ?? " +
                 "00 00 00 00 00 00 00 00 " +
                 "00 00 00 00 00 00 00 00 " +
-                "02 00 00 00 ?? 00 00 00 " +
+                "02 00 00 00 ?? ?? ?? ?? " +
                 "?? ?? 00 00 00 00 00 00 " +
                 "00 00 00 00 00 00 00 00 " +
-                "03 00 00 00 ?? 00 00 ?? " +
-                "?? ?? ?? ?? ?? ?? ?? ?? " +
-                "00 00 00 00 00 00 00 00 " +
-                "03 00 00 00 ?? 00 00 ?? " +
-                "00 00 00 ?? ?? ?? ?? ?? " +
-                "00 00 00 00 00 00 00 00 " +
-                "1C 00 00 00 ?? 00 00 00 " +
-                "?? ?? ?? ?? ?? ?? 00 00 " +
-                "00 00 00 00 00 00 00 00 " +
-                "01 00 00 00 ?? 00 00 00 " +
-                "00 00 00 00 00 00 00 00";
+                "03 00 00 00 ?? ?? ?? ??";
+
             _timeAddress = ScanMemoryBMH(timePattern);
 
             if (_timeAddress != IntPtr.Zero) { Dispatcher.BeginInvoke(() => Notes_Textblock.Text += "Time hooked! \nAddress: " + _timeAddress.ToString("X8") + "\n").Wait(); }
