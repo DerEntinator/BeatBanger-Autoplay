@@ -367,8 +367,7 @@ namespace BeatBanger_Autoplay
                                 }
                             }
 
-                        keys.Sort((s1, s2) => s1.timestamp.CompareTo(s2.timestamp));
-                        timesheet.Add(keys);
+                        timesheet.Add(keys.OrderBy(s => s.timestamp).ThenBy(s => s.down).ToList());
                     }
             }
             clearMemory();
