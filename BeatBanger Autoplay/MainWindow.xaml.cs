@@ -396,7 +396,7 @@ namespace BeatBanger_Autoplay
                             else currentDifficulty = dataBuffer[21 * 8];
 
                             Keys buffer;
-                            if (timesheet[currentDifficulty].Count != 0)
+                            if (timesheet[currentDifficulty].Count != 0 && timeRead < timesheet[currentDifficulty][0].timestamp)
                                 for (int n = 0; n < timesheet[currentDifficulty].Count; n++)
                                 {
                                     buffer = timesheet[currentDifficulty][n].key;
