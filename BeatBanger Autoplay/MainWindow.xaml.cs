@@ -282,9 +282,12 @@ namespace BeatBanger_Autoplay
                                 levelDelay = settingsObj["data"]["song_offset"].Value<double>() * 1000.0;
 
                                 string meta = File.ReadAllText(GetMetaPath(currentLevel.filepath));
+                                // format file
                                 meta = meta.Replace("\n", "").Replace("\r", "");
                                 meta = "{\"data\":" + meta.Remove(0, meta.IndexOf("{"));
                                 meta = meta.Remove(meta.LastIndexOf("}") + 1) + "}";
+                                // fix new color attribute
+                                meta = meta.Replace("Color(", "[").Replace(")", "]");
                                 JObject metaObj = JObject.Parse(meta);
 
                                 currentLevel.level = metaObj["data"]["level_name"].Value<string>();
