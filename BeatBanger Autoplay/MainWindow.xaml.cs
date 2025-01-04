@@ -79,12 +79,181 @@ namespace BeatBanger_Autoplay
 
         string gameFolder = "ERROR";
         string keybindingsPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Godot\\app_userdata\\Beat Banger\\binds.sav";
-        Keys key1 = Keys.Z;
-        Keys key2 = Keys.X;
-        Keys key3 = Keys.C;
-        Keys key4 = Keys.V;
+        Keys key1 = Keys.A;
+        Keys key2 = Keys.S;
+        Keys key3 = Keys.D;
+        Keys key4 = Keys.F;
         Keys key5 = Keys.Q;
         Keys key6 = Keys.E;
+
+        private static readonly Dictionary<int, int> godotToWindowsKeyMap = new Dictionary<int, int>    {
+            // Godot Key          => Windows Virtual-Key Code (VK_...)
+            // Printable keys (Note: Godot distinguishes between uppercase and lowercase, Windows VK codes generally don't)
+            { 32, 0x20 },   // KEY_SPACE      => VK_SPACE
+            { 33, 0x21 },   // KEY_EXCLAM     => VK_OEM_7 (with Shift) - This is an approximation
+            { 34, 0xDE },   // KEY_QUOTEDBL   => VK_OEM_7 (with Shift) - This is an approximation
+            { 35, 0x23 },   // KEY_NUMBERSIGN => VK_OEM_3 (with Shift) - This is an approximation
+            { 36, 0x24 },   // KEY_DOLLAR     => VK_OEM_4 (with Shift) - This is an approximation
+            { 37, 0x25 },   // KEY_PERCENT    => VK_OEM_5 (with Shift) - This is an approximation
+            { 38, 0x26 },   // KEY_AMPERSAND  => VK_OEM_7 (with Shift) - This is an approximation
+            { 39, 0xDE },   // KEY_APOSTROPHE => VK_OEM_7
+            { 40, 0x28 },   // KEY_PARENLEFT  => VK_OEM_1 (with Shift) - This is an approximation
+            { 41, 0x29 },   // KEY_PARENRIGHT => VK_OEM_PLUS (with Shift) - This is an approximation
+            { 42, 0x2A },   // KEY_ASTERISK   => VK_OEM_8 (with Shift) - This is an approximation
+            { 43, 0xBB },   // KEY_PLUS       => VK_OEM_PLUS
+            { 44, 0xBC },   // KEY_COMMA      => VK_OEM_COMMA
+            { 45, 0xBD },   // KEY_MINUS      => VK_OEM_MINUS
+            { 46, 0xBE },   // KEY_PERIOD     => VK_OEM_PERIOD
+            { 47, 0xBF },   // KEY_SLASH      => VK_OEM_2
+            { 48, 0x30 },   // KEY_0          => VK_0
+            { 49, 0x31 },   // KEY_1          => VK_1
+            { 50, 0x32 },   // KEY_2          => VK_2
+            { 51, 0x33 },   // KEY_3          => VK_3
+            { 52, 0x34 },   // KEY_4          => VK_4
+            { 53, 0x35 },   // KEY_5          => VK_5
+            { 54, 0x36 },   // KEY_6          => VK_6
+            { 55, 0x37 },   // KEY_7          => VK_7
+            { 56, 0x38 },   // KEY_8          => VK_8
+            { 57, 0x39 },   // KEY_9          => VK_9
+            { 58, 0x3A },   // KEY_COLON      => VK_OEM_1 (with Shift) - This is an approximation
+            { 59, 0xBA },   // KEY_SEMICOLON  => VK_OEM_1
+            { 60, 0x3C },   // KEY_LESS       => VK_OEM_COMMA (with Shift) - This is an approximation
+            { 61, 0x3D },   // KEY_EQUAL      => VK_OEM_PLUS
+            { 62, 0x3E },   // KEY_GREATER    => VK_OEM_PERIOD (with Shift) - This is an approximation
+            { 63, 0x3F },   // KEY_QUESTION   => VK_OEM_2 (with Shift) - This is an approximation
+            { 64, 0x40 },   // KEY_AT         => VK_OEM_2 (with Shift) - This is an approximation
+            { 65, 0x41 },   // KEY_A          => VK_A
+            { 66, 0x42 },   // KEY_B          => VK_B
+            { 67, 0x43 },   // KEY_C          => VK_C
+            { 68, 0x44 },   // KEY_D          => VK_D
+            { 69, 0x45 },   // KEY_E          => VK_E
+            { 70, 0x46 },   // KEY_F          => VK_F
+            { 71, 0x47 },   // KEY_G          => VK_G
+            { 72, 0x48 },   // KEY_H          => VK_H
+            { 73, 0x49 },   // KEY_I          => VK_I
+            { 74, 0x4A },   // KEY_J          => VK_J
+            { 75, 0x4B },   // KEY_K          => VK_K
+            { 76, 0x4C },   // KEY_L          => VK_L
+            { 77, 0x4D },   // KEY_M          => VK_M
+            { 78, 0x4E },   // KEY_N          => VK_N
+            { 79, 0x4F },   // KEY_O          => VK_O
+            { 80, 0x50 },   // KEY_P          => VK_P
+            { 81, 0x51 },   // KEY_Q          => VK_Q
+            { 82, 0x52 },   // KEY_R          => VK_R
+            { 83, 0x53 },   // KEY_S          => VK_S
+            { 84, 0x54 },   // KEY_T          => VK_T
+            { 85, 0x55 },   // KEY_U          => VK_U
+            { 86, 0x56 },   // KEY_V          => VK_V
+            { 87, 0x57 },   // KEY_W          => VK_W
+            { 88, 0x58 },   // KEY_X          => VK_X
+            { 89, 0x59 },   // KEY_Y          => VK_Y
+            { 90, 0x5A },   // KEY_Z          => VK_Z
+            { 91, 0xDB },   // KEY_BRACKETLEFT  => VK_OEM_4
+            { 92, 0xDC },   // KEY_BACKSLASH    => VK_OEM_5
+            { 93, 0xDD },   // KEY_BRACKETRIGHT => VK_OEM_6
+            { 94, 0x5E },   // KEY_ASCIICIRCUM  => VK_OEM_6 (with Shift) - This is an approximation
+            { 95, 0x5F },   // KEY_UNDERSCORE   => VK_OEM_MINUS (with Shift) - This is an approximation
+            { 96, 0xC0 },   // KEY_QUOTELEFT    => VK_OEM_3
+            { 123, 0xDB },  // KEY_BRACELEFT    => VK_OEM_4 (with Shift) - This is an approximation
+            { 124, 0xDC },  // KEY_BAR          => VK_OEM_5 (with Shift) - This is an approximation
+            { 125, 0xDD },  // KEY_BRACERIGHT   => VK_OEM_6 (with Shift) - This is an approximation
+            { 126, 0xC0 },  // KEY_ASCIITILDE   => VK_OEM_3 (with Shift) - This is an approximation
+            // { 165, ??? }, // KEY_YEN          => No direct equivalent - This is an approximation
+            // { 167, ??? }, // KEY_SECTION      => No direct equivalent - This is an approximation
+
+            // Non-printable keys
+            { 4194305, 0x1B }, // KEY_ESCAPE     => VK_ESCAPE
+            { 4194306, 0x09 }, // KEY_TAB        => VK_TAB
+            { 4194307, 0x09 }, // KEY_BACKTAB    => VK_TAB (with Shift)
+            { 4194308, 0x08 }, // KEY_BACKSPACE  => VK_BACK
+            { 4194309, 0x0D }, // KEY_ENTER      => VK_RETURN
+            { 4194310, 0x0D }, // KEY_KP_ENTER   => VK_RETURN (on numeric keypad)
+            { 4194311, 0x2D }, // KEY_INSERT     => VK_INSERT
+            { 4194312, 0x2E }, // KEY_DELETE     => VK_DELETE
+            { 4194313, 0x13 }, // KEY_PAUSE      => VK_PAUSE
+            { 4194314, 0x2C }, // KEY_PRINT      => VK_SNAPSHOT
+            { 4194315, 0x2C }, // KEY_SYSREQ     => VK_SNAPSHOT (combined with Alt)
+            { 4194316, 0x0C }, // KEY_CLEAR      => VK_CLEAR (rarely used)
+            { 4194317, 0x24 }, // KEY_HOME       => VK_HOME
+            { 4194318, 0x23 }, // KEY_END        => VK_END
+            { 4194319, 0x25 }, // KEY_LEFT       => VK_LEFT
+            { 4194320, 0x26 }, // KEY_UP         => VK_UP
+            { 4194321, 0x27 }, // KEY_RIGHT      => VK_RIGHT
+            { 4194322, 0x28 }, // KEY_DOWN       => VK_DOWN
+            { 4194323, 0x21 }, // KEY_PAGEUP     => VK_PRIOR
+            { 4194324, 0x22 }, // KEY_PAGEDOWN   => VK_NEXT
+            { 4194325, 0x10 }, // KEY_SHIFT      => VK_SHIFT
+            { 4194326, 0x11 }, // KEY_CTRL       => VK_CONTROL
+            { 4194327, 0xA5 }, // KEY_META       => VK_MENU (Right Alt/AltGr) - This is an approximation
+            { 4194328, 0x12 }, // KEY_ALT        => VK_MENU
+            { 4194329, 0x14 }, // KEY_CAPSLOCK   => VK_CAPITAL
+            { 4194330, 0x90 }, // KEY_NUMLOCK    => VK_NUMLOCK
+            { 4194331, 0x91 }, // KEY_SCROLLLOCK => VK_SCROLL
+            { 4194332, 0x70 }, // KEY_F1         => VK_F1
+            { 4194333, 0x71 }, // KEY_F2         => VK_F2
+            { 4194334, 0x72 }, // KEY_F3         => VK_F3
+            { 4194335, 0x73 }, // KEY_F4         => VK_F4
+            { 4194336, 0x74 }, // KEY_F5         => VK_F5
+            { 4194337, 0x75 }, // KEY_F6         => VK_F6
+            { 4194338, 0x76 }, // KEY_F7         => VK_F7
+            { 4194339, 0x77 }, // KEY_F8         => VK_F8
+            { 4194340, 0x78 }, // KEY_F9         => VK_F9
+            { 4194341, 0x79 }, // KEY_F10        => VK_F10
+            { 4194342, 0x7A }, // KEY_F11        => VK_F11
+            { 4194343, 0x7B }, // KEY_F12        => VK_F12
+            { 4194344, 0x7C }, // KEY_F13        => VK_F13
+            { 4194345, 0x7D }, // KEY_F14        => VK_F14
+            { 4194346, 0x7E }, // KEY_F15        => VK_F15
+            { 4194347, 0x7F }, // KEY_F16        => VK_F16
+            { 4194348, 0x80 }, // KEY_F17        => VK_F17
+            { 4194349, 0x81 }, // KEY_F18        => VK_F18
+            { 4194350, 0x82 }, // KEY_F19        => VK_F19
+            { 4194351, 0x83 }, // KEY_F20        => VK_F20
+            { 4194352, 0x84 }, // KEY_F21        => VK_F21
+            { 4194353, 0x85 }, // KEY_F22        => VK_F22
+            { 4194354, 0x86 }, // KEY_F23        => VK_F23
+            { 4194355, 0x87 }, // KEY_F24        => VK_F24
+            // ... (F25-F32 are not typically mapped to standard Windows VK codes)
+            { 4194433, 0x6A }, // KEY_KP_MULTIPLY => VK_MULTIPLY
+            { 4194434, 0x6F }, // KEY_KP_DIVIDE   => VK_DIVIDE
+            { 4194435, 0x6D }, // KEY_KP_SUBTRACT => VK_SUBTRACT
+            { 4194436, 0x6E }, // KEY_KP_PERIOD   => VK_DECIMAL
+            { 4194437, 0x6B }, // KEY_KP_ADD      => VK_ADD
+            { 4194438, 0x60 }, // KEY_KP_0        => VK_NUMPAD0
+            { 4194439, 0x61 }, // KEY_KP_1        => VK_NUMPAD1
+            { 4194440, 0x62 }, // KEY_KP_2        => VK_NUMPAD2
+            { 4194441, 0x63 }, // KEY_KP_3        => VK_NUMPAD3
+            { 4194442, 0x64 }, // KEY_KP_4        => VK_NUMPAD4
+            { 4194443, 0x65 }, // KEY_KP_5        => VK_NUMPAD5
+            { 4194444, 0x66 }, // KEY_KP_6        => VK_NUMPAD6
+            { 4194445, 0x67 }, // KEY_KP_7        => VK_NUMPAD7
+            { 4194446, 0x68 }, // KEY_KP_8        => VK_NUMPAD8
+            { 4194447, 0x69 }, // KEY_KP_9        => VK_NUMPAD9
+            { 4194370, 0x5D }, // KEY_MENU       => VK_APPS
+            // { 4194371, ??? }, // KEY_HYPER      => No direct equivalent
+            { 4194373, 0x2F }, // KEY_HELP       => VK_HELP
+            { 4194376, 0xA6 }, // KEY_BACK       => VK_BROWSER_BACK
+            { 4194377, 0xA7 }, // KEY_FORWARD    => VK_BROWSER_FORWARD
+            { 4194378, 0xAB }, // KEY_STOP       => VK_BROWSER_STOP
+            { 4194379, 0xA8 }, // KEY_REFRESH    => VK_BROWSER_REFRESH
+            { 4194380, 0xAE }, // KEY_VOLUMEDOWN => VK_VOLUME_DOWN
+            { 4194381, 0xAD }, // KEY_VOLUMEMUTE => VK_VOLUME_MUTE
+            { 4194382, 0xAF }, // KEY_VOLUMEUP   => VK_VOLUME_UP
+            { 4194388, 0xB3 }, // KEY_MEDIAPLAY  => VK_MEDIA_PLAY_PAUSE
+            { 4194389, 0xB2 }, // KEY_MEDIASTOP  => VK_MEDIA_STOP
+            { 4194390, 0xB1 }, // KEY_MEDIAPREVIOUS => VK_MEDIA_PREV_TRACK
+            { 4194391, 0xB0 }, // KEY_MEDIANEXT  => VK_MEDIA_NEXT_TRACK
+            // { 4194392, ??? }, // KEY_MEDIARECORD => No standard VK code
+            { 4194393, 0xAA }, // KEY_HOMEPAGE   => VK_BROWSER_HOME
+            { 4194394, 0xA9 }, // KEY_FAVORITES  => VK_BROWSER_FAVORITES
+            { 4194395, 0xAC }, // KEY_SEARCH     => VK_BROWSER_SEARCH
+            { 4194396, 0x5F }, // KEY_STANDBY    => VK_SLEEP
+            { 4194397, 0xB5 }, // KEY_OPENURL    => VK_LAUNCH_MAIL (or similar) - This is an approximation
+            { 4194398, 0xB4 }, // KEY_LAUNCHMAIL => VK_LAUNCH_MAIL
+            { 4194399, 0xB5 }, // KEY_LAUNCHMEDIA => VK_LAUNCH_MEDIA_SELECT
+            // ... (LAUNCH0 - LAUNCHF have no standard VK codes)
+        };
+
         const uint WM_KEYDOWN = 0x100;
         const uint WM_KEYUP = 0x0101;
 
@@ -111,7 +280,7 @@ namespace BeatBanger_Autoplay
             Reload();
             Task.Run(() =>
             {
-                getLevel();     //getLevel() - ernative level loading
+                getLevel();
             });
         }
 
@@ -210,19 +379,19 @@ namespace BeatBanger_Autoplay
             try
             {
                 string bindings = "";
-                bindings = File.ReadAllText(keybindingsPath);
+                bindings = File.ReadAllText(keybindingsPath, System.Text.Encoding.UTF8);
                 bindings = bindings.Replace("\n", "").Replace("\r", "");
                 bindings = "{\"registered_keys\":" + bindings.Remove(0, bindings.IndexOf("{") - 1);
                 bindings = bindings.Remove(bindings.LastIndexOf("}") + 2) + "}";
                 JObject bindingsObj = JObject.Parse(bindings);
                 var binds = bindingsObj["registered_keys"].Children().ToList();
 
-                key1 = (Keys)binds[0]["keycode"].Value<int>();
-                key2 = (Keys)binds[1]["keycode"].Value<int>();
-                key3 = (Keys)binds[2]["keycode"].Value<int>();
-                key4 = (Keys)binds[3]["keycode"].Value<int>();
-                key5 = (Keys)binds[4]["keycode"].Value<int>();
-                key6 = (Keys)binds[5]["keycode"].Value<int>();
+                key1 = (Keys)godotToWindowsKeyMap[binds[0]["keycode"].Value<int>()];
+                key2 = (Keys)godotToWindowsKeyMap[binds[1]["keycode"].Value<int>()];
+                key3 = (Keys)godotToWindowsKeyMap[binds[2]["keycode"].Value<int>()];
+                key4 = (Keys)godotToWindowsKeyMap[binds[3]["keycode"].Value<int>()];
+                key5 = (Keys)godotToWindowsKeyMap[binds[4]["keycode"].Value<int>()];
+                key6 = (Keys)godotToWindowsKeyMap[binds[5]["keycode"].Value<int>()];
 
                 LoadNotes();
             }
@@ -270,10 +439,10 @@ namespace BeatBanger_Autoplay
                         {
                             cancleRun = true;
 
-                            string config = File.ReadAllText(currentLevel.filepath);
+                            string config = File.ReadAllText(currentLevel.filepath, System.Text.Encoding.UTF8);
                             if (config.Contains("charts"))
                             {
-                                string settings = File.ReadAllText(GetSettingsPath(currentLevel.filepath));
+                                string settings = File.ReadAllText(GetSettingsPath(currentLevel.filepath), System.Text.Encoding.UTF8);
                                 settings = settings.Replace("\n", "").Replace("\r", "");
                                 settings = "{\"data\":" + settings.Remove(0, settings.IndexOf("{"));
                                 settings = settings.Remove(settings.LastIndexOf("}") + 1) + "}";
@@ -281,7 +450,7 @@ namespace BeatBanger_Autoplay
 
                                 levelDelay = settingsObj["data"]["song_offset"].Value<double>() * 1000.0;
 
-                                string meta = File.ReadAllText(GetMetaPath(currentLevel.filepath));
+                                string meta = File.ReadAllText(GetMetaPath(currentLevel.filepath), System.Text.Encoding.UTF8);
                                 // format file
                                 meta = meta.Replace("\n", "").Replace("\r", "");
                                 meta = "{\"data\":" + meta.Remove(0, meta.IndexOf("{"));
