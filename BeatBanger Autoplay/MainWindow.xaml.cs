@@ -79,6 +79,7 @@ namespace BeatBanger_Autoplay
 
         string gameFolder = "ERROR";
         string keybindingsPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Godot\\app_userdata\\Beat Banger\\binds.sav";
+        string modPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Godot\\app_userdata\\Beat Banger\\mods";
         Keys key1 = Keys.A;
         Keys key2 = Keys.S;
         Keys key3 = Keys.D;
@@ -407,6 +408,7 @@ namespace BeatBanger_Autoplay
                     if (gameFolder != "ERROR" && _processHandle != IntPtr.Zero && _windowHandle != IntPtr.Zero && _timeAddress != IntPtr.Zero && _dataAddress != IntPtr.Zero)
                     {
                         List<string> tempList = Directory.GetFiles(gameFolder, "notes.cfg", SearchOption.AllDirectories).ToList();
+                        tempList.AddRange(Directory.GetFiles(modPath, "notes.cfg", SearchOption.AllDirectories).ToList());
 
                         if (levelCount != tempList.Count)
                         {
