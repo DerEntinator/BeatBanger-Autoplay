@@ -66,8 +66,6 @@ namespace BeatBanger_Autoplay
 
     public partial class MainWindow : Window
     {
-        int fileCount = 0;
-        int fileOffset = 0;
         List<ConfigFile> fileList = new List<ConfigFile>();
         ConfigFile currentLevel = new ConfigFile();
 
