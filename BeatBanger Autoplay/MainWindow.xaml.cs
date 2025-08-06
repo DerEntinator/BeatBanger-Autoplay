@@ -491,8 +491,8 @@ namespace BeatBanger_Autoplay
                     if (gameFolder != "ERROR" && _processHandle != IntPtr.Zero && _windowHandle != IntPtr.Zero && _timeAddress != IntPtr.Zero && _dataAddress != IntPtr.Zero)
                     {
                         List<string> tempList = Directory.GetFiles(gameFolder, "notes.cfg", SearchOption.AllDirectories).ToList();
-                        tempList.AddRange(Directory.GetFiles(modPathAppData, "notes.cfg", SearchOption.AllDirectories).ToList());
-                        tempList.AddRange(Directory.GetFiles(gameFolder + "\\mods", "notes.cfg", SearchOption.AllDirectories).ToList());
+                        if (Directory.Exists(modPathAppData)) { tempList.AddRange(Directory.GetFiles(modPathAppData, "notes.cfg", SearchOption.AllDirectories).ToList()); }
+                        if (Directory.Exists(gameFolder + "\\mods")) { tempList.AddRange(Directory.GetFiles(gameFolder + "\\mods", "notes.cfg", SearchOption.AllDirectories).ToList()); }
 
                         if (levelCount != tempList.Count)
                         {
