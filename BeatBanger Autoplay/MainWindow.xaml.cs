@@ -66,6 +66,8 @@ namespace BeatBanger_Autoplay
 
     public partial class MainWindow : Window
     {
+        int fileCount = 0;
+        int fileOffset = 0;
         List<ConfigFile> fileList = new List<ConfigFile>();
         ConfigFile currentLevel = new ConfigFile();
 
@@ -76,14 +78,13 @@ namespace BeatBanger_Autoplay
         List<List<Keyvent>> timesheet = new List<List<Keyvent>>();
 
         string gameFolder = "ERROR";
-        string keybindingsPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Godot\\app_userdata\\Beat Banger\\binds.sav";
-        string modPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Godot\\app_userdata\\Beat Banger\\mods";
+        string keybindingsPathSav = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Godot\\app_userdata\\Beat Banger\\binds.sav";
+        string keybindingsPathIni = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Godot\\app_userdata\\Beat Banger\\binds.ini";
+        string modPathAppData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Godot\\app_userdata\\Beat Banger\\mods";
         Keys key1 = Keys.A;
         Keys key2 = Keys.S;
         Keys key3 = Keys.D;
         Keys key4 = Keys.F;
-        Keys key5 = Keys.Q;
-        Keys key6 = Keys.E;
 
         private static readonly Dictionary<int, int> godotToWindowsKeyMap = new Dictionary<int, int>    {
             // Godot Key          => Windows Virtual-Key Code (VK_...)
@@ -377,24 +378,108 @@ namespace BeatBanger_Autoplay
         {
             try
             {
-                string bindings = "";
-                bindings = File.ReadAllText(keybindingsPath, System.Text.Encoding.UTF8);
-                bindings = bindings.Replace("\n", "").Replace("\r", "");
-                bindings = "{\"registered_keys\":" + bindings.Remove(0, bindings.IndexOf("{") - 1);
-                bindings = bindings.Remove(bindings.LastIndexOf("}") + 2) + "}";
-                JObject bindingsObj = JObject.Parse(bindings);
-                var binds = bindingsObj["registered_keys"].Children().ToList();
+                bool savExists = File.Exists(keybindingsPathSav);
+                bool iniExists = File.Exists(keybindingsPathIni);
 
-                key1 = (Keys)godotToWindowsKeyMap[binds[0]["keycode"].Value<int>()];
-                key2 = (Keys)godotToWindowsKeyMap[binds[1]["keycode"].Value<int>()];
-                key3 = (Keys)godotToWindowsKeyMap[binds[2]["keycode"].Value<int>()];
-                key4 = (Keys)godotToWindowsKeyMap[binds[3]["keycode"].Value<int>()];
-                key5 = (Keys)godotToWindowsKeyMap[binds[4]["keycode"].Value<int>()];
-                key6 = (Keys)godotToWindowsKeyMap[binds[5]["keycode"].Value<int>()];
+                if (!savExists && !iniExists)
+                {
+                    // Neither file exists, use defaults and show an error.
+                    key1 = Keys.A; key2 = Keys.S; key3 = Keys.D; key4 = Keys.F;
+                    errorMessage(new FileNotFoundException("Could not find 'binds.sav' or 'binds.ini'. Using default keys (A, S, D, F)."));
+                }
+                else if (iniExists && (!savExists || File.GetLastAccessTimeUtc(keybindingsPathIni) > File.GetLastAccessTimeUtc(keybindingsPathSav)))
+                {
+                    // New .ini file is newer or is the only one that exists.
+                    ParseNewKeybinds(keybindingsPathIni);
+                }
+                else
+                {
+                    // Old .sav file is newer or is the only one that exists.
+                    ParseOldKeybinds(keybindingsPathSav);
+                }
 
-                LoadNotes();
+                LoadNotes().Wait();
             }
             catch (Exception ex) { errorMessage(ex); }
+        }
+
+        private void ParseOldKeybinds(string filePath)
+        {
+            string bindingsText = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
+            bindingsText = bindingsText.Replace("\n", "").Replace("\r", "");
+            bindingsText = "{\"registered_keys\":" + bindingsText.Remove(0, bindingsText.IndexOf("{") - 1);
+            bindingsText = bindingsText.Remove(bindingsText.LastIndexOf("}") + 2) + "}";
+            JObject bindingsObj = JObject.Parse(bindingsText);
+            var binds = bindingsObj["registered_keys"].Children().ToList();
+
+            // Helper to find a keycode for a specific action, with a fallback.
+            int GetKeycodeForAction(string actionName, int defaultKey)
+            {
+                var binding = binds.FirstOrDefault(b => b["action"]?.Value<string>() == actionName);
+                return binding?["keycode"]?.Value<int>() ?? defaultKey;
+            }
+
+            // Map actions to keys, providing Godot keycodes for defaults (A, S, D, F)
+            int k1_godot = GetKeycodeForAction("action_0", 65); // Default A
+            int k2_godot = GetKeycodeForAction("action_1", 83); // Default S
+            int k3_godot = GetKeycodeForAction("action_2", 68); // Default D
+            int k4_godot = GetKeycodeForAction("action_3", 70); // Default F
+
+            key1 = (Keys)godotToWindowsKeyMap[k1_godot];
+            key2 = (Keys)godotToWindowsKeyMap[k2_godot];
+            key3 = (Keys)godotToWindowsKeyMap[k3_godot];
+            key4 = (Keys)godotToWindowsKeyMap[k4_godot];
+        }
+
+        private void ParseNewKeybinds(string filePath)
+        {
+            string content = File.ReadAllText(filePath);
+
+            // Helper function to find the keycode for a specific "game_note_X" action
+            int FindKeycodeForAction(string actionName, int defaultKey)
+            {
+                // The action name we are looking for, e.g., "action": &"game_note_0"
+                string searchTerm = $"\"action\": &\"{actionName}\"";
+                int actionPos = content.IndexOf(searchTerm);
+                if (actionPos == -1) return defaultKey;
+
+                // Find the "InputEventKey" object within this action's scope to ensure we get a keyboard key
+                int eventKeyPos = content.IndexOf("Object(InputEventKey,", actionPos);
+                if (eventKeyPos == -1) return defaultKey;
+
+                // Find the end of this action block to avoid reading into the next one
+                int nextActionPos = content.IndexOf("}, {", actionPos);
+                if (nextActionPos == -1) nextActionPos = content.Length;
+
+                // Ensure the InputEventKey we found belongs to *this* action block
+                if (eventKeyPos > nextActionPos) return defaultKey;
+
+                // Find the keycode label and extract its value
+                int keycodeLabelPos = content.IndexOf("\"keycode\":", eventKeyPos);
+                if (keycodeLabelPos == -1 || keycodeLabelPos > nextActionPos) return defaultKey;
+
+                int keycodeStart = keycodeLabelPos + "\"keycode\":".Length;
+                int keycodeEnd = content.IndexOfAny(new[] { ',', '}' }, keycodeStart);
+
+                if (int.TryParse(content.Substring(keycodeStart, keycodeEnd - keycodeStart).Trim(), out int godotKey))
+                {
+                    return godotKey;
+                }
+                return defaultKey;
+            }
+            ;
+
+            // Find Godot keycodes for the 4 main game notes, providing defaults
+            int k1_godot = FindKeycodeForAction("game_note_0", 65); // Default A
+            int k2_godot = FindKeycodeForAction("game_note_1", 83); // Default S
+            int k3_godot = FindKeycodeForAction("game_note_2", 68); // Default D
+            int k4_godot = FindKeycodeForAction("game_note_3", 70); // Default F
+
+            // Map the found Godot keycodes to Windows Keys, using the map
+            key1 = godotToWindowsKeyMap.ContainsKey(k1_godot) ? (Keys)godotToWindowsKeyMap[k1_godot] : Keys.A;
+            key2 = godotToWindowsKeyMap.ContainsKey(k2_godot) ? (Keys)godotToWindowsKeyMap[k2_godot] : Keys.S;
+            key3 = godotToWindowsKeyMap.ContainsKey(k3_godot) ? (Keys)godotToWindowsKeyMap[k3_godot] : Keys.D;
+            key4 = godotToWindowsKeyMap.ContainsKey(k4_godot) ? (Keys)godotToWindowsKeyMap[k4_godot] : Keys.F;
         }
 
         private async Task getLevel()
@@ -406,7 +491,8 @@ namespace BeatBanger_Autoplay
                     if (gameFolder != "ERROR" && _processHandle != IntPtr.Zero && _windowHandle != IntPtr.Zero && _timeAddress != IntPtr.Zero && _dataAddress != IntPtr.Zero)
                     {
                         List<string> tempList = Directory.GetFiles(gameFolder, "notes.cfg", SearchOption.AllDirectories).ToList();
-                        tempList.AddRange(Directory.GetFiles(modPath, "notes.cfg", SearchOption.AllDirectories).ToList());
+                        tempList.AddRange(Directory.GetFiles(modPathAppData, "notes.cfg", SearchOption.AllDirectories).ToList());
+                        tempList.AddRange(Directory.GetFiles(gameFolder + "\\mods", "notes.cfg", SearchOption.AllDirectories).ToList());
 
                         if (levelCount != tempList.Count)
                         {
